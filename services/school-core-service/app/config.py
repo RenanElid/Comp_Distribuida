@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     database_url: str
     jwt_secret: str
     user_service_url: str = "http://localhost:8001"
+    kafka_bootstrap_servers: str | None = None
 
 
 settings = Settings()

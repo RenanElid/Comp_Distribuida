@@ -39,3 +39,5 @@ Se a porta 5432 já estiver ocupada no computador, altere `POSTGRES_PORT` no `.e
 As migrations de cada banco estão em `sql/user-service/` e `sql/school-core-service/`. Elas não são executadas automaticamente por este Compose; consulte [sql/README.md](../sql/README.md) para a ordem e os dados de teste.
 
 O script de criação dos bancos só roda quando o volume `postgres_data` está vazio. Para parar o container sem apagar os dados, use `docker compose down`. O arquivo `.env` é local e não entra no Git.
+
+Para iniciar o Kafka da etapa seguinte, consulte [kafka.md](kafka.md).

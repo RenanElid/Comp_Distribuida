@@ -17,7 +17,7 @@ app/
   config.py        variáveis de ambiente
   database.py      conexão com o banco
   security.py      validação do JWT e permissões por perfil
-  eventos.py       publicação de eventos (por enquanto só no log; depois Kafka)
+  eventos.py       publicação de eventos no Kafka quando configurado
   models/          tabelas do banco (SQLAlchemy)
   schemas/         dados de entrada e saída da API (Pydantic)
   repositories/    consultas ao banco
@@ -37,6 +37,7 @@ O fluxo de uma requisição é: `routes` → `services` → `repositories` → b
 | `JWT_SECRET` | chave com pelo menos 32 caracteres |
 | `JWT_EXPIRACAO_MINUTOS` | `60` (opcional) |
 | `FRONTEND_URL` | `http://localhost:3000` (opcional, usado nos links de email) |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` ao rodar no computador; `kafka:19092` em outro contêiner |
 
 **school-core-service**
 
@@ -45,6 +46,7 @@ O fluxo de uma requisição é: `routes` → `services` → `repositories` → b
 | `DATABASE_URL` | `postgresql+psycopg://distrischool:senha@db:5432/school_db` |
 | `JWT_SECRET` | **a mesma chave do user-service** |
 | `USER_SERVICE_URL` | `http://user-service:8001` |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` ao rodar no computador; `kafka:19092` em outro contêiner |
 
 ## Para quem cuida da infraestrutura
 
@@ -98,7 +100,7 @@ Todas as rotas, menos login, recuperação de senha e verificação de email, ex
 
 Ao cadastrar um aluno, professor ou técnico, o school-core-service chama o user-service para criar o login (com o perfil STUDENT, TEACHER ou ADMIN) e depois grava o cadastro no `school_db`. Ao excluir, o login é desativado.
 
-Eventos já publicados (no log, até o Kafka entrar): `user.logged`, `student.created`, `teacher.assigned`.
+Com `KAFKA_BOOTSTRAP_SERVERS` configurado, os eventos `user.logged`, `student.created` e `teacher.assigned` são enviados aos tópicos de mesmo nome. Sem essa variável, continuam apenas no log. A configuração e a verificação do broker estão em [docs/kafka.md](../docs/kafka.md).
 
 ## Rodar localmente
 

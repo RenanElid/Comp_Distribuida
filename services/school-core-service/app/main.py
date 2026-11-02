@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse
@@ -6,11 +7,18 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.eventos import fechar_produtor
 from app.routes import alunos, disciplinas, professores, tecnicos, turmas
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="DistriSchool - School Core Service")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    yield
+    fechar_produtor()
+
+
+app = FastAPI(title="DistriSchool - School Core Service", lifespan=lifespan)
 app.include_router(alunos.router)
 app.include_router(professores.router)
 app.include_router(tecnicos.router)

@@ -4,4 +4,6 @@ Trabalho da cadeira de computação distribuída pela Universidade de Fortaleza,
 
 Configuração local do PostgreSQL 17: [docs/docker.md](docs/docker.md).
 
+Integração de eventos com Kafka: [docs/kafka.md](docs/kafka.md).
+
 Backend (user-service e school-core-service): [services/README.md](services/README.md).
