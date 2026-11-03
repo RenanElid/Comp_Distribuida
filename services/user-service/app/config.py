@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_expiracao_minutos: int = 60
     frontend_url: str = "http://localhost:3000"
+    kafka_bootstrap_servers: str | None = None
 
 
 settings = Settings()
