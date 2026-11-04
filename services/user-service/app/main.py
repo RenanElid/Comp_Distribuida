@@ -17,11 +17,9 @@ async def lifespan(_app: FastAPI):
     yield
     fechar_produtor()
 
-
 app = FastAPI(title="DistriSchool - User Service", lifespan=lifespan)
 app.include_router(auth.router)
 app.include_router(usuarios.router)
-
 
 @app.get("/health", tags=["Health"])
 def health(db: Session = Depends(get_db)):

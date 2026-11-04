@@ -13,13 +13,11 @@ _parar = Event()
 _produtor: Producer | None = None
 _thread: Thread | None = None
 
-
 def _registrar_entrega(erro, mensagem):
     if erro is not None:
         logger.error("Falha ao entregar evento no tópico %s: %s", mensagem.topic(), erro)
     else:
         logger.info("Evento entregue no tópico %s, offset %s", mensagem.topic(), mensagem.offset())
-
 
 def _processar_entregas(produtor: Producer):
     while not _parar.is_set():
@@ -28,7 +26,6 @@ def _processar_entregas(produtor: Producer):
         except KafkaException:
             logger.exception("Falha ao consultar entregas do Kafka")
             _parar.wait(1)
-
 
 def _obter_produtor() -> Producer | None:
     global _produtor, _thread
@@ -51,7 +48,6 @@ def _obter_produtor() -> Producer | None:
             _thread.start()
         return _produtor
 
-
 def publicar_evento(topico: str, dados: dict):
     produtor = _obter_produtor()
     if produtor is None:
@@ -66,7 +62,6 @@ def publicar_evento(topico: str, dados: dict):
         produtor.produce(topico, value=mensagem, on_delivery=_registrar_entrega)
     except (BufferError, KafkaException):
         logger.exception("Não foi possível enfileirar o evento %s no Kafka", topico)
-
 
 def fechar_produtor():
     global _produtor, _thread

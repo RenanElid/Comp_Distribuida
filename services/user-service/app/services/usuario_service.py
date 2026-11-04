@@ -6,7 +6,6 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.usuario import UsuarioCreate, UsuarioPagina, UsuarioUpdate
 from app.security import gerar_hash_senha
 
-
 class UsuarioService:
     def __init__(self, db: Session):
         self.usuario_repository = UsuarioRepository(db)

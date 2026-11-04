@@ -16,13 +16,11 @@ from app.security import criar_token, gerar_hash_senha, ler_token, verificar_sen
 HORAS_VALIDADE_RECUPERACAO = 1
 HORAS_VALIDADE_VERIFICACAO = 24
 
-
 class AuthService:
     def __init__(self, db: Session):
         self.usuario_repository = UsuarioRepository(db)
         self.token_repository = TokenRecuperacaoRepository(db)
 
-    # Confere email e senha e devolve o JWT de acesso com o id e o perfil do usuário.
     def login(self, dados: LoginRequest) -> TokenResponse:
         usuario = self.usuario_repository.buscar_por_email(dados.email.strip().lower())
         if usuario is None or not verificar_senha(dados.senha, usuario.senha_hash):
@@ -65,7 +63,6 @@ class AuthService:
         usuario = self.usuario_repository.buscar_por_id(token.usuario_id)
         usuario.senha_hash = gerar_hash_senha(dados.nova_senha)
         token.usado = True
-        # O mesmo commit grava a nova senha e marca o token como usado.
         self.usuario_repository.salvar(usuario)
 
     def enviar_verificacao_email(self, usuario_id: int):
