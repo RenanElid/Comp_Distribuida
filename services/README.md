@@ -90,8 +90,8 @@ Todas as rotas do acadêmico são para ADMIN ou TEACHER.
 | GET | `/api/matriculas?aluno_id=&turma_id=` | Lista as matrículas (os dois filtros são opcionais) |
 | POST | `/api/matriculas` | Matricula um aluno numa turma |
 | DELETE | `/api/matriculas/{id}` | Cancela a matrícula (as notas e a frequência dela somem junto) |
-| POST | `/api/notas` | Lança uma nota (de 0 a 10) |
-| GET | `/api/notas?matricula_id=` | Lista as notas da matrícula, com a média calculada na hora |
+| POST | `/api/notas` | Lança uma nota (de 0 a 10) de uma disciplina |
+| GET | `/api/notas?matricula_id=&disciplina_id=` | Lista as notas da matrícula, com a média calculada na hora. Com `disciplina_id`, a média é só daquela disciplina |
 | POST | `/api/frequencias` | Registra a frequência de um dia (`PRESENTE`, `FALTA` ou `ATRASO`) |
 | GET | `/api/frequencias?matricula_id=` | Lista a frequência da matrícula |
 
@@ -106,13 +106,13 @@ curl -s -X POST http://localhost:8080/api/matriculas \
 # Matrículas da turma 1
 curl -s "http://localhost:8080/api/matriculas?turma_id=1" -H "Authorization: Bearer $TOKEN"
 
-# Lançar nota -> 201 {"id": 1, "matricula_id": 1, "descricao": "AV1", "valor": 8.5}
+# Lançar nota de Matemática (disciplina 1) -> 201 {"id": 1, "matricula_id": 1, "disciplina_id": 1, "descricao": "AV1", "valor": 8.5}
 curl -s -X POST http://localhost:8080/api/notas \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"matricula_id": 1, "descricao": "AV1", "valor": 8.5}'
+  -d '{"matricula_id": 1, "disciplina_id": 1, "descricao": "AV1", "valor": 8.5}'
 
-# Notas e média -> {"matricula_id": 1, "notas": [...], "media": 8.5}
-curl -s "http://localhost:8080/api/notas?matricula_id=1" -H "Authorization: Bearer $TOKEN"
+# Notas e média de Matemática -> {"matricula_id": 1, "disciplina_id": 1, "notas": [...], "media": 8.5}
+curl -s "http://localhost:8080/api/notas?matricula_id=1&disciplina_id=1" -H "Authorization: Bearer $TOKEN"
 
 # Registrar frequência -> 201 {"id": 1, "matricula_id": 1, "data": "2026-11-03", "situacao": "PRESENTE"}
 curl -s -X POST http://localhost:8080/api/frequencias \
