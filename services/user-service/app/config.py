@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
@@ -9,6 +8,5 @@ class Settings(BaseSettings):
     jwt_expiracao_minutos: int = 60
     frontend_url: str = "http://localhost:3000"
     kafka_bootstrap_servers: str | None = None
-
 
 settings = Settings()

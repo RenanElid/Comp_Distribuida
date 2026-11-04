@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app.models import Usuario
 
-
 class UsuarioRepository:
     def __init__(self, db: Session):
         self.db = db

@@ -1,43 +1,70 @@
-# Docker (semanas 1-2)
+# Docker (semanas 3-4)
 
-O `compose.yaml` sobe um PostgreSQL 17. Na primeira inicialização, o script em `docker/postgres/initdb/` cria os dois bancos definidos em `sql/README.md`: `user_db` e `school_db`.
+O `compose.yaml` sobe o sistema inteiro:
 
-## Iniciar no Windows
+| Container | O que é |
+| --- | --- |
+| `gateway` | Nginx, porta 8080. Única porta que o frontend usa |
+| `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
+| `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
+| `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
+| `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
 
-1. Abra o Docker Desktop e espere o mecanismo ficar ativo.
-2. Na raiz do repositório, crie o `.env` se ainda não existir:
+## Iniciar
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+O passo a passo completo (criar os `.env`, trocar a senha e a chave do JWT) está no [README.md da raiz](../README.md). Na raiz do repositório, com o Docker ativo:
 
-3. Troque `POSTGRES_PASSWORD` no `.env` por uma senha local e execute:
+```bash
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps -a
+```
 
-   ```powershell
-   docker compose config
-   docker compose up -d db
-   docker compose ps
-   ```
+Espere todos ficarem `healthy`. Os 4 `flyway-...` terminam com `Exited (0)`.
 
-4. Confira se os dois bancos foram criados:
+A ordem de subida é automática:
 
-   ```powershell
-   docker compose exec db psql -U distrischool -d postgres -c "SELECT datname FROM pg_database WHERE datname IN ('user_db', 'school_db') ORDER BY datname;"
-   ```
+1. cada banco sobe e fica `healthy`;
+2. o Flyway daquele banco roda as migrations de `sql/<serviço>/` e termina;
+3. só então o serviço sobe;
+4. o gateway sobe quando os 4 serviços estão `healthy`.
 
-Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`.
+O Flyway roda de novo a cada `docker compose up`. Quando não há migration nova, ele só confere e termina (`Schema "public" is up to date`).
 
-## Conexão
+## Bancos
 
-| Banco | A partir de outro container | A partir do computador |
+| Banco | Container | Serviço |
 | --- | --- | --- |
-| Usuários | `db:5432/user_db` | `localhost:5432/user_db` |
-| Escola | `db:5432/school_db` | `localhost:5432/school_db` |
+| `user_db` | `db-user` | user-service |
+| `administrativo_db` | `db-administrativo` | administrativo-service |
+| `alunos_db` | `db-alunos` | alunos-service |
+| `academico_db` | `db-academico` | academico-service |
 
-Se a porta 5432 já estiver ocupada no computador, altere `POSTGRES_PORT` no `.env`. Dentro do Compose a porta continua 5432. A porta publicada fica acessível apenas no próprio computador.
+Os 4 bancos **não** publicam porta no computador: só o serviço e o Flyway acessam, pela rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados no seu volume (`user_db_data`, `administrativo_db_data`, `alunos_db_data` e `academico_db_data`).
 
-As migrations de cada banco estão em `sql/user-service/` e `sql/school-core-service/`. Elas não são executadas automaticamente por este Compose; consulte [sql/README.md](../sql/README.md) para a ordem e os dados de teste.
+Para consultar um banco pelo terminal:
 
-O script de criação dos bancos só roda quando o volume `postgres_data` está vazio. Para parar o container sem apagar os dados, use `docker compose down`. O arquivo `.env` é local e não entra no Git.
+```bash
+docker compose exec db-alunos psql -U distrischool -d alunos_db -c "SELECT COUNT(*) FROM alunos;"
+```
 
-Para iniciar o Kafka da etapa seguinte, consulte [kafka.md](kafka.md).
+Para ver o resultado do Flyway:
+
+```bash
+docker compose logs flyway-academico
+```
+
+Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`. As migrations ficam em `sql/`; a ordem e os dados de teste estão em [sql/README.md](../sql/README.md).
+
+## Portas no computador
+
+| Porta | Container |
+| --- | --- |
+| 8080 (`GATEWAY_PORT`) | gateway |
+| 8001, 8002, 8003 | user-service, administrativo-service, alunos-service |
+| 8004 a 8006 | academico-service (uma porta por cópia, com `--scale`) |
+| 9092 (`KAFKA_PORT`) | kafka |
+
+Todas as portas ficam acessíveis apenas no próprio computador (`127.0.0.1`). Os arquivos `.env` são locais e não entram no Git.
+
+Para rodar 3 cópias do acadêmico, consulte o [README.md da raiz](../README.md). Para o Kafka, consulte [kafka.md](kafka.md).
