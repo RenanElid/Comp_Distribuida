@@ -1,23 +1,4 @@
 services:
-  db:
-    image: postgres:17
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
   kafka:
     image: apache/kafka:4.3.2
     hostname: kafka
@@ -51,6 +32,217 @@ services:
       retries: 10
       start_period: 30s
 
+  db-user:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d user_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  db-administrativo:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: administrativo_db
+      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - administrativo_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d administrativo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  db-alunos:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alunos_db
+      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - alunos_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d alunos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  db-academico:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: academico_db
+      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - academico_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d academico_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  flyway-user:
+    image: flyway/flyway:11.20.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db-user:5432/user_db
+      FLYWAY_USER: ${POSTGRES_USER:-distrischool}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ./sql/user-service:/flyway/sql:ro
+    depends_on:
+      db-user:
+        condition: service_healthy
+
+  flyway-administrativo:
+    image: flyway/flyway:11.20.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db-administrativo:5432/administrativo_db
+      FLYWAY_USER: ${POSTGRES_USER:-distrischool}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ./sql/administrativo-service:/flyway/sql:ro
+    depends_on:
+      db-administrativo:
+        condition: service_healthy
+
+  flyway-alunos:
+    image: flyway/flyway:11.20.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db-alunos:5432/alunos_db
+      FLYWAY_USER: ${POSTGRES_USER:-distrischool}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ./sql/alunos-service:/flyway/sql:ro
+    depends_on:
+      db-alunos:
+        condition: service_healthy
+
+  flyway-academico:
+    image: flyway/flyway:11.20.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db-academico:5432/academico_db
+      FLYWAY_USER: ${POSTGRES_USER:-distrischool}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ./sql/academico-service:/flyway/sql:ro
+    depends_on:
+      db-academico:
+        condition: service_healthy
+
+  user-service:
+    build: ./services/user-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8001"
+    env_file: ./services/user-service/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      flyway-user:
+        condition: service_completed_successfully
+
+  administrativo-service:
+    build: ./services/administrativo-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8002:8002"
+    env_file: ./services/administrativo-service/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      flyway-administrativo:
+        condition: service_completed_successfully
+
+  alunos-service:
+    build: ./services/alunos-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8003:8003"
+    env_file: ./services/alunos-service/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      flyway-alunos:
+        condition: service_completed_successfully
+
+  academico-service:
+    build: ./services/academico-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8004-8006:8004"
+    env_file: ./services/academico-service/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      flyway-academico:
+        condition: service_completed_successfully
+
+  gateway:
+    image: nginx:1.28.0-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:-8080}:80"
+    environment:
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      user-service:
+        condition: service_healthy
+      administrativo-service:
+        condition: service_healthy
+      alunos-service:
+        condition: service_healthy
+      academico-service:
+        condition: service_healthy
+
 volumes:
-  postgres_data:
   kafka_data:
+  user_db_data:
+  administrativo_db_data:
+  alunos_db_data:
+  academico_db_data:
