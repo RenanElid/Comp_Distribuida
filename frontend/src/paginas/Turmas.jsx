@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   LinearProgress,
+  Link as LinkMui,
   Paper,
   Table,
   TableBody,
@@ -13,18 +14,22 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { listarTurmas } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
 import useCarregamento from '../hooks/useCarregamento';
 
 export const NOMES_TURNO = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite' };
 
-// Kept as its own component: in the next step the row becomes a link to /turmas/:id
-function LinhaTurma({ turma }) {
+// estadoDoLink carries the year filter so the detail page can come back to it
+function LinhaTurma({ turma, estadoDoLink }) {
   return (
     <TableRow hover>
-      <TableCell>{turma.nome}</TableCell>
+      <TableCell>
+        <LinkMui component={Link} to={`/turmas/${turma.id}`} state={estadoDoLink}>
+          {turma.nome}
+        </LinkMui>
+      </TableCell>
       <TableCell>{turma.ano_letivo}</TableCell>
       <TableCell>{NOMES_TURNO[turma.turno] ?? turma.turno}</TableCell>
     </TableRow>
@@ -33,6 +38,7 @@ function LinhaTurma({ turma }) {
 
 export default function Turmas() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const estadoDoLink = { voltarPara: useLocation().search };
   // Only digits reach the API; anything else in the URL is treated as "all years"
   const parametroAno = searchParams.get('ano_letivo') ?? '';
   const anoLetivo = /^\d+$/.test(parametroAno) ? parametroAno : '';
@@ -90,7 +96,7 @@ export default function Turmas() {
             </TableHead>
             <TableBody>
               {turmas.map((turma) => (
-                <LinhaTurma key={turma.id} turma={turma} />
+                <LinhaTurma key={turma.id} turma={turma} estadoDoLink={estadoDoLink} />
               ))}
               {!carregando && !erro && turmas.length === 0 && (
                 <TableRow>
