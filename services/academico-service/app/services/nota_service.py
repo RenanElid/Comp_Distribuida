@@ -16,21 +16,32 @@ class NotaService:
         if self.matricula_repository.buscar_por_id(dados.matricula_id) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Matrícula não encontrada")
 
-        nota = Nota(matricula_id=dados.matricula_id, descricao=dados.descricao, valor=dados.valor)
+        nota = Nota(
+            matricula_id=dados.matricula_id,
+            disciplina_id=dados.disciplina_id,
+            descricao=dados.descricao,
+            valor=dados.valor,
+        )
         nota = self.nota_repository.salvar(nota)
 
         publicar_evento(
             "grade.recorded",
-            {"nota_id": nota.id, "matricula_id": nota.matricula_id, "descricao": nota.descricao, "valor": float(nota.valor)},
+            {
+                "nota_id": nota.id,
+                "matricula_id": nota.matricula_id,
+                "disciplina_id": nota.disciplina_id,
+                "descricao": nota.descricao,
+                "valor": float(nota.valor),
+            },
         )
         return nota
 
-    def listar_da_matricula(self, matricula_id: int) -> NotasDaMatricula:
+    def listar_da_matricula(self, matricula_id: int, disciplina_id: int | None = None) -> NotasDaMatricula:
         if self.matricula_repository.buscar_por_id(matricula_id) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Matrícula não encontrada")
 
-        notas = self.nota_repository.listar_da_matricula(matricula_id)
+        notas = self.nota_repository.listar_da_matricula(matricula_id, disciplina_id)
         media = None
         if notas:
             media = round(sum(float(nota.valor) for nota in notas) / len(notas), 2)
-        return NotasDaMatricula(matricula_id=matricula_id, notas=notas, media=media)
+        return NotasDaMatricula(matricula_id=matricula_id, disciplina_id=disciplina_id, notas=notas, media=media)

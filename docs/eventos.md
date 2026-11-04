@@ -118,7 +118,7 @@ Publicado pelo academico-service (`nota_service.py`).
 {
   "tipo": "grade.recorded",
   "ocorrido_em": "2026-11-03T21:15:33.887120+00:00",
-  "dados": { "nota_id": 1, "matricula_id": 4, "descricao": "AV1", "valor": 8.5 }
+  "dados": { "nota_id": 1, "matricula_id": 4, "disciplina_id": 1, "descricao": "AV1", "valor": 8.5 }
 }
 ```
 
