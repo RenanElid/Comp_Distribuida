@@ -1,4 +1,4 @@
--- school_db: teachers.
+-- administrativo_db: teachers.
 
 CREATE TABLE professores (
     id            BIGSERIAL    PRIMARY KEY,

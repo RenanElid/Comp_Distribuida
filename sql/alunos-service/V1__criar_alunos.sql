@@ -1,4 +1,4 @@
--- school_db: students.
+-- alunos_db: students.
 
 CREATE TABLE alunos (
     id               BIGSERIAL    PRIMARY KEY,

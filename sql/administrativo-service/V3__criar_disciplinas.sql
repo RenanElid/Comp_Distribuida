@@ -1,4 +1,4 @@
--- school_db: subjects.
+-- administrativo_db: subjects.
 
 CREATE TABLE disciplinas (
     id            BIGSERIAL    PRIMARY KEY,

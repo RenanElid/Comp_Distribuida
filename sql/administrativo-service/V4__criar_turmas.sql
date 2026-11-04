@@ -1,4 +1,4 @@
--- school_db: classes (groups of students in a school year).
+-- administrativo_db: classes (groups of students in a school year).
 
 CREATE TABLE turmas (
     id           BIGSERIAL    PRIMARY KEY,

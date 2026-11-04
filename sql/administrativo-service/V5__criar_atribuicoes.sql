@@ -1,4 +1,4 @@
--- school_db: assignment of a teacher to a subject in a class.
+-- administrativo_db: assignment of a teacher to a subject in a class.
 
 CREATE TABLE atribuicoes (
     id            BIGSERIAL PRIMARY KEY,

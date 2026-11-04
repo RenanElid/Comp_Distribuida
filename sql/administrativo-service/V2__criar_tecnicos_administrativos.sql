@@ -1,4 +1,4 @@
--- school_db: administrative technicians.
+-- administrativo_db: administrative technicians.
 
 CREATE TABLE tecnicos_administrativos (
     id          BIGSERIAL    PRIMARY KEY,
