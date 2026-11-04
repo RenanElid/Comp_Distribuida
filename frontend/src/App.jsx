@@ -5,6 +5,8 @@ import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
 import Inicio from './paginas/Inicio';
 import Login from './paginas/Login';
+import Professores from './paginas/Professores';
+import Turmas from './paginas/Turmas';
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
           {/* The static "novo" wins over ":id" in React Router's ranking */}
           <Route path="/alunos/novo" element={<AlunoForm />} />
           <Route path="/alunos/:id" element={<AlunoForm />} />
+          <Route path="/professores" element={<Professores />} />
+          <Route path="/turmas" element={<Turmas />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

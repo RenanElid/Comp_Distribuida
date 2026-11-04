@@ -27,3 +27,11 @@ export function atualizarAluno(id, dados) {
 export function excluirAluno(id) {
   return requisicao(`/alunos/${id}`, { metodo: 'DELETE' });
 }
+
+export function listarProfessores() {
+  return requisicao('/professores');
+}
+
+export function listarTurmas({ ano_letivo } = {}) {
+  return requisicao('/turmas', { params: { ano_letivo } });
+}

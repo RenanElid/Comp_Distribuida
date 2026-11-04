@@ -7,6 +7,8 @@ import { NOMES_PERFIL } from '../utils/permissoes';
 const ITENS_MENU = [
   { rotulo: 'Início', caminho: '/' },
   { rotulo: 'Alunos', caminho: '/alunos' },
+  { rotulo: 'Professores', caminho: '/professores' },
+  { rotulo: 'Turmas', caminho: '/turmas' },
 ];
 
 export default function Layout() {
