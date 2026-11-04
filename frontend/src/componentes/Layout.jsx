@@ -4,7 +4,10 @@ import { useAuth } from '../contexto/AuthContext';
 import { NOMES_PERFIL } from '../utils/permissoes';
 
 // Menu items are added here as each screen is built
-const ITENS_MENU = [{ rotulo: 'Início', caminho: '/' }];
+const ITENS_MENU = [
+  { rotulo: 'Início', caminho: '/' },
+  { rotulo: 'Alunos', caminho: '/alunos' },
+];
 
 export default function Layout() {
   const { usuario, sair } = useAuth();
@@ -21,7 +24,7 @@ export default function Layout() {
               key={item.caminho}
               component={NavLink}
               to={item.caminho}
-              end
+              end={item.caminho === '/'}
               color="inherit"
               sx={{ '&.active': { bgcolor: 'rgba(255,255,255,0.15)' } }}
             >
