@@ -2,9 +2,11 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
 const CHAVE_TOKEN = 'distrischool_token';
 
 export class ErroApi extends Error {
-  constructor(status, mensagem) {
+  // campos: {nome_do_campo: "mensagem"} for 422 errors, null otherwise
+  constructor(status, mensagem, campos = null) {
     super(mensagem);
     this.status = status;
+    this.campos = campos;
   }
 }
 
@@ -28,6 +30,35 @@ export function definirAoNaoAutorizado(funcao) {
   aoNaoAutorizado = funcao;
 }
 
+// Pydantic messages come in English; the "type" code is stable, so translate by it
+function traduzirErroDeCampo(erro) {
+  const ctx = erro.ctx ?? {};
+  // An empty value fails with different types (pattern, min length, date); all mean "required"
+  if (erro.type === 'missing' || erro.input === '') return 'Campo obrigatório';
+  if (erro.type === 'string_too_short') return `Mínimo de ${ctx.min_length} caracteres`;
+  if (erro.type === 'string_too_long') return `Máximo de ${ctx.max_length} caracteres`;
+  // The only regex in the schemas is the email one
+  if (erro.type === 'string_pattern_mismatch') return 'Email inválido';
+  if (erro.type?.startsWith('date')) return 'Data inválida';
+  return erro.msg;
+}
+
+function nomeDoCampo(erro) {
+  return (erro.loc ?? []).filter((parte) => parte !== 'body').join('.');
+}
+
+// 422 -> {"email": "Email inválido", ...}; errors without a field name are left out
+function extrairCampos(corpo) {
+  const detail = corpo?.detail;
+  if (!Array.isArray(detail)) return null;
+  const campos = {};
+  detail.forEach((erro) => {
+    const campo = nomeDoCampo(erro);
+    if (campo && !campos[campo]) campos[campo] = traduzirErroDeCampo(erro);
+  });
+  return Object.keys(campos).length ? campos : null;
+}
+
 // FastAPI sends two error shapes:
 //   422 -> {detail: [{loc: ["body", "email"], msg: "...", type: "..."}]}
 //   others -> {detail: "texto"}
@@ -38,8 +69,9 @@ function extrairMensagem(status, corpo) {
   if (Array.isArray(detail)) {
     return detail
       .map((erro) => {
-        const campo = (erro.loc ?? []).filter((parte) => parte !== 'body').join('.');
-        return campo ? `${campo}: ${erro.msg}` : erro.msg;
+        const campo = nomeDoCampo(erro);
+        const mensagem = traduzirErroDeCampo(erro);
+        return campo ? `${campo}: ${mensagem}` : mensagem;
       })
       .join(' | ');
   }
@@ -92,7 +124,7 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, params, auten
       removerToken();
       aoNaoAutorizado?.();
     }
-    throw new ErroApi(resposta.status, extrairMensagem(resposta.status, dados));
+    throw new ErroApi(resposta.status, extrairMensagem(resposta.status, dados), extrairCampos(dados));
   }
   return dados;
 }

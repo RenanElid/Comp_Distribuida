@@ -15,7 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { listarAlunos } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
 import { useAuth } from '../contexto/AuthContext';
@@ -47,6 +47,8 @@ export default function Alunos() {
   const podeEditar = podeEditarAlunos(usuario.perfil);
   const [searchParams, setSearchParams] = useSearchParams();
   const parametros = lerParametros(searchParams);
+  // Passed to the form so saving or cancelling returns to these filters and page
+  const estadoDoLink = { voltarPara: useLocation().search };
   const { nome, matricula, pagina, tamanho } = parametros;
 
   // Text typed in the fields; only goes to the URL on "Buscar"
@@ -70,7 +72,13 @@ export default function Alunos() {
     setErro(null);
     listarAlunos({ nome, matricula, pagina, tamanho })
       .then((dados) => {
-        if (!ignorar) setResultado(dados);
+        if (ignorar) return;
+        // Deleting the only student of the last page leaves it empty: jump to the new last page
+        if (dados.itens.length === 0 && pagina > 1 && dados.total > 0) {
+          atualizarUrl({ pagina: Math.ceil(dados.total / tamanho) }, { replace: true });
+          return;
+        }
+        setResultado(dados);
       })
       .catch((e) => {
         if (!ignorar) setErro(e);
@@ -83,14 +91,14 @@ export default function Alunos() {
     };
   }, [nome, matricula, pagina, tamanho]);
 
-  function atualizarUrl(mudancas) {
+  function atualizarUrl(mudancas, opcoes) {
     const novos = { ...parametros, ...mudancas };
     const limpos = {};
     if (novos.nome) limpos.nome = novos.nome;
     if (novos.matricula) limpos.matricula = novos.matricula;
     if (novos.pagina > 1) limpos.pagina = novos.pagina;
     if (novos.tamanho !== 20) limpos.tamanho = novos.tamanho;
-    setSearchParams(limpos);
+    setSearchParams(limpos, opcoes);
   }
 
   function buscar(evento) {
@@ -110,7 +118,7 @@ export default function Alunos() {
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5">Alunos</Typography>
         {podeEditar && (
-          <Button variant="contained" component={Link} to="/alunos/novo">
+          <Button variant="contained" component={Link} to="/alunos/novo" state={estadoDoLink}>
             + Novo
           </Button>
         )}
@@ -157,10 +165,11 @@ export default function Alunos() {
                   <TableCell>{aluno.matricula}</TableCell>
                   <TableCell>{aluno.nome}</TableCell>
                   <TableCell>{formatarData(aluno.data_nascimento)}</TableCell>
-                  <TableCell>{aluno.contato ?? '-'}</TableCell>
+                  {/* || instead of ??: a cleared field comes back as "" (see AlunoForm) */}
+                  <TableCell>{aluno.contato || '-'}</TableCell>
                   {podeEditar && (
                     <TableCell align="right">
-                      <Button size="small" component={Link} to={`/alunos/${aluno.id}`}>
+                      <Button size="small" component={Link} to={`/alunos/${aluno.id}`} state={estadoDoLink}>
                         Editar
                       </Button>
                     </TableCell>

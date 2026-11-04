@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './componentes/Layout';
 import RotaProtegida from './componentes/RotaProtegida';
+import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
 import Inicio from './paginas/Inicio';
 import Login from './paginas/Login';
@@ -13,6 +14,9 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Inicio />} />
           <Route path="/alunos" element={<Alunos />} />
+          {/* The static "novo" wins over ":id" in React Router's ranking */}
+          <Route path="/alunos/novo" element={<AlunoForm />} />
+          <Route path="/alunos/:id" element={<AlunoForm />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

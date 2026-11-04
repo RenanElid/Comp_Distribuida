@@ -11,3 +11,19 @@ export function buscarUsuarioLogado() {
 export function listarAlunos({ nome, matricula, pagina, tamanho }) {
   return requisicao('/alunos', { params: { nome, matricula, pagina, tamanho } });
 }
+
+export function buscarAluno(id) {
+  return requisicao(`/alunos/${id}`);
+}
+
+export function criarAluno(dados) {
+  return requisicao('/alunos', { metodo: 'POST', corpo: dados });
+}
+
+export function atualizarAluno(id, dados) {
+  return requisicao(`/alunos/${id}`, { metodo: 'PUT', corpo: dados });
+}
+
+export function excluirAluno(id) {
+  return requisicao(`/alunos/${id}`, { metodo: 'DELETE' });
+}
