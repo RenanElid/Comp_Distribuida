@@ -27,6 +27,7 @@ sql/
     V2__criar_notas.sql
     V3__criar_frequencias.sql
     V4__seed_matriculas.sql
+    V5__adicionar_disciplina_em_notas.sql
 ```
 
 ## Ordem de execucao

@@ -8,5 +8,6 @@ class Nota(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     matricula_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("matriculas.id"))
+    disciplina_id: Mapped[int | None] = mapped_column(BigInteger)
     descricao: Mapped[str] = mapped_column(String(50))
     valor: Mapped[Decimal] = mapped_column(Numeric(4, 2))
