@@ -5,6 +5,7 @@ import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
 import Inicio from './paginas/Inicio';
 import Login from './paginas/Login';
+import MatriculaDetalhe from './paginas/MatriculaDetalhe';
 import Professores from './paginas/Professores';
 import TurmaDetalhe from './paginas/TurmaDetalhe';
 import Turmas from './paginas/Turmas';
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/professores" element={<Professores />} />
           <Route path="/turmas" element={<Turmas />} />
           <Route path="/turmas/:id" element={<TurmaDetalhe />} />
+          <Route path="/matriculas/:id" element={<MatriculaDetalhe />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

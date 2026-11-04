@@ -11,6 +11,7 @@ import {
   DialogContentText,
   DialogTitle,
   LinearProgress,
+  Link as LinkMui,
   Paper,
   Stack,
   Table,
@@ -41,16 +42,19 @@ function descreverAluno(aluno) {
   return `${aluno.nome} (${aluno.matricula})`;
 }
 
-// Kept as its own component: in the next step the row becomes a link to the grades/attendance page
-function LinhaMatricula({ linha, podeGerenciar, aoCancelar }) {
+// The link state carries the enrollment (there is no GET /matriculas/{id}) and how to come back here
+function LinhaMatricula({ linha, podeGerenciar, aoCancelar, estadoDaTurma }) {
   const { aluno, matricula } = linha;
+  const estadoDoLink = { matricula, voltarParaTurma: `/turmas/${matricula.turma_id}`, estadoDaTurma };
   return (
     <TableRow hover>
       <TableCell>{aluno?.matricula ?? '-'}</TableCell>
       <TableCell>
-        {/* No student found: either the alunos-service is down or the student was just deleted
-            and the student.deleted event has not removed this enrollment yet */}
-        {aluno ? aluno.nome : `Aluno #${matricula.aluno_id} (não encontrado)`}
+        <LinkMui component={Link} to={`/matriculas/${matricula.id}`} state={estadoDoLink}>
+          {/* No student found: either the alunos-service is down or the student was just deleted
+              and the student.deleted event has not removed this enrollment yet */}
+          {aluno ? aluno.nome : `Aluno #${matricula.aluno_id} (não encontrado)`}
+        </LinkMui>
       </TableCell>
       {podeGerenciar && (
         <TableCell align="right">
@@ -231,6 +235,7 @@ export default function TurmaDetalhe() {
                   linha={linha}
                   podeGerenciar={podeGerenciar}
                   aoCancelar={abrirCancelar}
+                  estadoDaTurma={local.state}
                 />
               ))}
               {!matriculas.carregando && !matriculas.erro && linhas.length === 0 && (

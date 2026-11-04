@@ -65,3 +65,28 @@ export function matricularAluno(aluno_id, turma_id) {
 export function cancelarMatricula(id) {
   return requisicao(`/matriculas/${id}`, { metodo: 'DELETE' });
 }
+
+export function listarAtribuicoesDaTurma(turmaId) {
+  return requisicao(`/turmas/${turmaId}/atribuicoes`);
+}
+
+export function listarDisciplinas() {
+  return requisicao('/disciplinas');
+}
+
+// Without disciplina_id: all grades of the enrollment (the per-subject averages are computed on the page)
+export function listarNotas(matricula_id) {
+  return requisicao('/notas', { params: { matricula_id } });
+}
+
+export function lancarNota(dados) {
+  return requisicao('/notas', { metodo: 'POST', corpo: dados });
+}
+
+export function listarFrequencias(matricula_id) {
+  return requisicao('/frequencias', { params: { matricula_id } });
+}
+
+export function registrarFrequencia(dados) {
+  return requisicao('/frequencias', { metodo: 'POST', corpo: dados });
+}

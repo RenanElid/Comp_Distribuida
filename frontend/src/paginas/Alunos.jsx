@@ -19,16 +19,10 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { listarAlunos } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
 import { useAuth } from '../contexto/AuthContext';
+import { formatarData } from '../utils/formatos';
 import { podeEditarAlunos } from '../utils/permissoes';
 
 const TAMANHOS = [5, 10, 20, 50];
-
-// "2010-05-03" -> "03/05/2010". new Date() would read it as UTC midnight
-// and show the previous day in UTC-3.
-function formatarData(dataIso) {
-  const [ano, mes, dia] = dataIso.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
 
 // Filters and page live in the URL, so F5 and the back button keep the state
 function lerParametros(searchParams) {

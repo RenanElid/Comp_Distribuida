@@ -34,9 +34,13 @@ export function definirAoNaoAutorizado(funcao) {
 function traduzirErroDeCampo(erro) {
   const ctx = erro.ctx ?? {};
   // An empty value fails with different types (pattern, min length, date); all mean "required"
-  if (erro.type === 'missing' || erro.input === '') return 'Campo obrigatório';
+  if (erro.type === 'missing' || erro.input === '' || erro.input === null) return 'Campo obrigatório';
   if (erro.type === 'string_too_short') return `Mínimo de ${ctx.min_length} caracteres`;
   if (erro.type === 'string_too_long') return `Máximo de ${ctx.max_length} caracteres`;
+  if (erro.type === 'greater_than_equal') return `Deve ser no mínimo ${ctx.ge}`;
+  if (erro.type === 'less_than_equal') return `Deve ser no máximo ${ctx.le}`;
+  if (erro.type?.startsWith('float') || erro.type?.startsWith('int')) return 'Número inválido';
+  if (erro.type === 'literal_error') return 'Valor inválido';
   // The only regex in the schemas is the email one
   if (erro.type === 'string_pattern_mismatch') return 'Email inválido';
   if (erro.type?.startsWith('date')) return 'Data inválida';
