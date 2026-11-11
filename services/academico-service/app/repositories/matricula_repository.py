@@ -14,6 +14,11 @@ class MatriculaRepository:
             select(Matricula).where(Matricula.aluno_id == aluno_id, Matricula.turma_id == turma_id)
         )
 
+    def buscar_no_ano_letivo(self, aluno_id: int, ano_letivo: int) -> Matricula | None:
+        return self.db.scalar(
+            select(Matricula).where(Matricula.aluno_id == aluno_id, Matricula.ano_letivo == ano_letivo)
+        )
+
     def listar(self, aluno_id: int | None, turma_id: int | None) -> list[Matricula]:
         consulta = select(Matricula)
         if aluno_id:

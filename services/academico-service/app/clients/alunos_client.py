@@ -14,7 +14,7 @@ TOTAL_DE_TENTATIVAS = 3
 
 circuito_alunos = CircuitBreaker("alunos-service")
 
-def verificar_aluno(aluno_id: int, token: str):
+def buscar_aluno(aluno_id: int, token: str) -> dict:
     if circuito_alunos.esta_aberto():
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Serviço de alunos indisponível")
 
@@ -34,7 +34,7 @@ def verificar_aluno(aluno_id: int, token: str):
                     raise HTTPException(status.HTTP_404_NOT_FOUND, "Aluno não encontrado")
                 if resposta.status_code != 200:
                     raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Erro ao consultar o serviço de alunos")
-                return
+                return resposta.json()
             logger.warning(
                 "Tentativa %s de %s ao alunos-service falhou: resposta %s",
                 tentativa,
@@ -47,3 +47,11 @@ def verificar_aluno(aluno_id: int, token: str):
 
     circuito_alunos.registrar_falha()
     raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Serviço de alunos indisponível")
+
+def buscar_destinatario(aluno_id: int, token: str) -> int | None:
+    try:
+        aluno = buscar_aluno(aluno_id, token)
+    except HTTPException as erro:
+        logger.warning("Notificação do aluno %s sem destinatário: %s", aluno_id, erro.detail)
+        return None
+    return aluno["responsavel_usuario_id"] or aluno["usuario_id"]

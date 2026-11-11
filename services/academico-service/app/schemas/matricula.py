@@ -10,3 +10,4 @@ class MatriculaResponse(BaseModel):
     id: int
     aluno_id: int
     turma_id: int
+    ano_letivo: int | None

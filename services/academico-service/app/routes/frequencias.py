@@ -12,11 +12,8 @@ router = APIRouter(prefix="/frequencias", tags=["Frequências"])
 def listar_frequencias(matricula_id: int, db: Session = Depends(get_db)):
     return FrequenciaService(db).listar_da_matricula(matricula_id)
 
-@router.post(
-    "",
-    response_model=FrequenciaResponse,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(admin_ou_professor)],
-)
-def registrar_frequencia(dados: FrequenciaCreate, db: Session = Depends(get_db)):
-    return FrequenciaService(db).registrar(dados)
+@router.post("", response_model=FrequenciaResponse, status_code=status.HTTP_201_CREATED)
+def registrar_frequencia(
+    dados: FrequenciaCreate, usuario: dict = Depends(admin_ou_professor), db: Session = Depends(get_db)
+):
+    return FrequenciaService(db).registrar(dados, usuario["token"])

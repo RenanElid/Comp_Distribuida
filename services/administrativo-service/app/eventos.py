@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from threading import Event, Lock, Thread
+from uuid import uuid4
 
 from confluent_kafka import KafkaException, Producer
 
@@ -55,7 +56,12 @@ def publicar_evento(topico: str, dados: dict):
         return
 
     mensagem = json.dumps(
-        {"tipo": topico, "ocorrido_em": datetime.now(timezone.utc).isoformat(), "dados": dados},
+        {
+            "evento_id": str(uuid4()),
+            "tipo": topico,
+            "ocorrido_em": datetime.now(timezone.utc).isoformat(),
+            "dados": dados,
+        },
         ensure_ascii=False,
     ).encode("utf-8")
     try:

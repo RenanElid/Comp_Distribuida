@@ -14,7 +14,7 @@ TOTAL_DE_TENTATIVAS = 3
 
 circuito_administrativo = CircuitBreaker("administrativo-service")
 
-def verificar_turma(turma_id: int, token: str):
+def buscar_turma(turma_id: int, token: str) -> dict:
     if circuito_administrativo.esta_aberto():
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Serviço administrativo indisponível")
 
@@ -34,7 +34,7 @@ def verificar_turma(turma_id: int, token: str):
                     raise HTTPException(status.HTTP_404_NOT_FOUND, "Turma não encontrada")
                 if resposta.status_code != 200:
                     raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Erro ao consultar o serviço administrativo")
-                return
+                return resposta.json()
             logger.warning(
                 "Tentativa %s de %s ao administrativo-service falhou: resposta %s",
                 tentativa,

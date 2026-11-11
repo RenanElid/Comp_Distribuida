@@ -12,6 +12,7 @@ class AlunoCreate(BaseModel):
     data_nascimento: date
     endereco: str | None = Field(default=None, max_length=255)
     contato: str | None = Field(default=None, max_length=100)
+    responsavel_usuario_id: int | None = None
 
 class AlunoUpdate(BaseModel):
     matricula: str | None = Field(default=None, min_length=1, max_length=20)
@@ -19,6 +20,7 @@ class AlunoUpdate(BaseModel):
     data_nascimento: date | None = None
     endereco: str | None = Field(default=None, max_length=255)
     contato: str | None = Field(default=None, max_length=100)
+    responsavel_usuario_id: int | None = None
 
 class AlunoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -30,6 +32,7 @@ class AlunoResponse(BaseModel):
     data_nascimento: date
     endereco: str | None
     contato: str | None
+    responsavel_usuario_id: int | None
 
 class AlunoPagina(BaseModel):
     itens: list[AlunoResponse]
