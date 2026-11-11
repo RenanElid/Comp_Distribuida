@@ -90,3 +90,20 @@ export function listarFrequencias(matricula_id) {
 export function registrarFrequencia(dados) {
   return requisicao('/frequencias', { metodo: 'POST', corpo: dados });
 }
+
+// TEMPORARY: local-only fake notifications to test the screen before the comunicacao-service exists.
+// The file notificacoesFalsas.js is NOT in the repository (listed in .git/info/exclude), so on any other
+// machine this glob finds nothing and the real API is always used. Remove this block once the service is up.
+const modulosFalsos = import.meta.glob('./notificacoesFalsas.js', { eager: true });
+const notificacoesFalsas =
+  import.meta.env.VITE_NOTIFICACOES_FALSAS === 'true' ? modulosFalsos['./notificacoesFalsas.js'] : undefined;
+
+export function listarNotificacoes() {
+  if (notificacoesFalsas) return notificacoesFalsas.listar();
+  return requisicao('/notificacoes');
+}
+
+export function marcarNotificacaoComoLida(id) {
+  if (notificacoesFalsas) return notificacoesFalsas.marcarComoLida(id);
+  return requisicao(`/notificacoes/${id}/lida`, { metodo: 'PATCH' });
+}

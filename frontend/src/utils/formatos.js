@@ -25,3 +25,9 @@ export function calcularMedia(valores) {
   const soma = valores.reduce((total, valor) => total + valor, 0);
   return Math.round((soma / valores.length) * 100) / 100;
 }
+
+// "2026-11-11T14:20:00+00:00" -> "11/11/2026 11:20" (local time). Safe with new Date because a full
+// timestamp carries its own offset; the UTC bug only affects date-only strings like "2026-11-11".
+export function formatarDataHora(timestampIso) {
+  return new Date(timestampIso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}

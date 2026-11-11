@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 import { useAuth } from '../contexto/AuthContext';
-import { NOMES_PERFIL } from '../utils/permissoes';
+import { NOMES_PERFIL, temAcessoAoPainel } from '../utils/permissoes';
 
 export default function Inicio() {
   const { usuario } = useAuth();
@@ -12,6 +12,11 @@ export default function Inicio() {
       <Typography color="text.secondary">
         Você entrou como {usuario.email} ({NOMES_PERFIL[usuario.perfil]}).
       </Typography>
+      {!temAcessoAoPainel(usuario.perfil) && (
+        <Typography color="text.secondary" sx={{ mt: 1 }}>
+          Acompanhe notas e frequência pela página Notificações.
+        </Typography>
+      )}
     </>
   );
 }
