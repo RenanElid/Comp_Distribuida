@@ -22,12 +22,18 @@ sql/
   alunos-service/          banco: alunos_db
     V1__criar_alunos.sql
     V2__seed_alunos.sql
+    V3__adicionar_responsavel_em_alunos.sql
+    V4__seed_responsavel.sql
   academico-service/       banco: academico_db
     V1__criar_matriculas.sql
     V2__criar_notas.sql
     V3__criar_frequencias.sql
     V4__seed_matriculas.sql
     V5__adicionar_disciplina_em_notas.sql
+    V6__adicionar_ano_letivo_em_matriculas.sql
+  comunicacao-service/     banco: comunicacao_db
+    V1__criar_notificacoes.sql
+    V2__criar_eventos_processados.sql
 ```
 
 ## Ordem de execucao
@@ -38,6 +44,7 @@ Execute os arquivos de cada pasta na ordem do numero da versao (V1, V2, V3...). 
 - administrativo_db: `professores`, `disciplinas` e `turmas` antes de `atribuicoes`.
 - alunos_db: so tem a tabela `alunos`.
 - academico_db: `matriculas` antes de `notas` e `frequencias`.
+- comunicacao_db: `notificacoes` e `eventos_processados` sao independentes.
 
 Os bancos sao independentes entre si, entao podem ser executados em qualquer ordem um em relacao ao outro. Os seeds usam ids que precisam bater entre os bancos (sem foreign key):
 
@@ -73,3 +80,6 @@ Atencao: os arquivos nao sao reentrantes. Rodar o mesmo arquivo duas vezes gera 
 - Sem foreign key entre bancos: `usuario_id` em `alunos`, `professores` e `tecnicos_administrativos`, e `aluno_id` e `turma_id` em `matriculas` (academico_db), sao apenas numeros.
 - Dentro do academico_db, `notas` e `frequencias` apontam para `matriculas` com foreign key e `ON DELETE CASCADE`: quando a matricula some, as notas e a frequencia dela somem junto.
 - Indices em `alunos.matricula` e `alunos.nome`.
+- `alunos.responsavel_usuario_id` (opcional) aponta para o usuario PARENT responsavel pelo aluno no user_db. No seed, a aluna Ana Souza (2026001) tem a Maria (usuario 16) como responsavel.
+- `matriculas.ano_letivo` e copiado da turma no momento da matricula, e `UNIQUE (aluno_id, ano_letivo)` garante uma turma por aluno por ano letivo. Matriculas antigas sem ano letivo ficam NULL e nao entram na regra.
+- `notificacoes` guarda as notificacoes de cada usuario (`usuario_id` do destinatario, enviado no evento por quem publica). `eventos_processados` evita notificar duas vezes o mesmo evento do Kafka: o consumidor grava o id do evento na mesma transacao da notificacao.
