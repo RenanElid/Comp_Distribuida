@@ -15,3 +15,4 @@ class Aluno(Base):
     data_nascimento: Mapped[date]
     endereco: Mapped[str | None] = mapped_column(String(255))
     contato: Mapped[str | None] = mapped_column(String(100))
+    responsavel_usuario_id: Mapped[int | None] = mapped_column(BigInteger)
