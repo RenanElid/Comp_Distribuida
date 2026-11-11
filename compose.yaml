@@ -96,6 +96,23 @@ services:
       retries: 10
       start_period: 10s
 
+  db-comunicacao:
+    profiles: [comunicacao]
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: comunicacao_db
+      POSTGRES_USER: ${POSTGRES_USER:-distrischool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - comunicacao_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d comunicacao_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   flyway-user:
     image: flyway/flyway:11.20.0
     command: migrate
@@ -150,6 +167,26 @@ services:
       - ./sql/academico-service:/flyway/sql:ro
     depends_on:
       db-academico:
+        condition: service_healthy
+
+  flyway-comunicacao:
+    profiles: [comunicacao]
+    image: flyway/flyway:11.20.0
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db-comunicacao:5432/comunicacao_db
+      FLYWAY_USER: ${POSTGRES_USER:-distrischool}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - type: bind
+        source: ./sql/comunicacao-service
+        target: /flyway/sql
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      db-comunicacao:
         condition: service_healthy
 
   user-service:
@@ -246,3 +283,4 @@ volumes:
   administrativo_db_data:
   alunos_db_data:
   academico_db_data:
+  comunicacao_db_data:

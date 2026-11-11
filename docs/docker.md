@@ -8,6 +8,7 @@ O `compose.yaml` sobe o sistema inteiro:
 | `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
 | `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
+| `db-comunicacao`, `flyway-comunicacao` | Banco e migrations de notificações, no perfil `comunicacao` |
 | `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
 
 ## Iniciar
@@ -57,8 +58,9 @@ Para mostrar o circuito abrindo, suba apenas uma réplica do acadêmico e rode o
 | `administrativo_db` | `db-administrativo` | administrativo-service |
 | `alunos_db` | `db-alunos` | alunos-service |
 | `academico_db` | `db-academico` | academico-service |
+| `comunicacao_db` | `db-comunicacao` | comunicacao-service (em desenvolvimento) |
 
-Os 4 bancos **não** publicam porta no computador: só o serviço e o Flyway acessam, pela rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados no seu volume (`user_db_data`, `administrativo_db_data`, `alunos_db_data` e `academico_db_data`).
+Os bancos ficam na rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados em seu próprio volume.
 
 Para consultar um banco pelo terminal:
 
@@ -73,6 +75,18 @@ docker compose logs flyway-academico
 ```
 
 Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`. As migrations ficam em `sql/`; a ordem e os dados de teste estão em [sql/README.md](../sql/README.md).
+
+### Banco de notificações
+
+Com as migrations de `sql/comunicacao-service/` no checkout, inicie o banco e aplique o SQL:
+
+```bash
+docker compose up -d flyway-comunicacao
+docker compose --profile comunicacao wait flyway-comunicacao
+docker compose --profile comunicacao ps -a db-comunicacao flyway-comunicacao
+```
+
+O `db-comunicacao` fica `healthy` e o `flyway-comunicacao` termina com `Exited (0)`. O perfil `comunicacao` permite validar o banco separadamente enquanto o serviço de notificações está em desenvolvimento.
 
 ## Portas no computador
 
