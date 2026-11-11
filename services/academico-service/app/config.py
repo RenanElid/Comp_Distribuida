@@ -8,5 +8,6 @@ class Settings(BaseSettings):
     alunos_service_url: str = "http://localhost:8003"
     administrativo_service_url: str = "http://localhost:8002"
     kafka_bootstrap_servers: str | None = None
+    espera_entre_tentativas: float = 0.5
 
 settings = Settings()
