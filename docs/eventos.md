@@ -14,15 +14,21 @@ Toda mensagem tem o mesmo formato (o "envelope"):
 
 ```json
 {
+  "evento_id": "1eb93a43-debf-41bd-943c-a2f1399ccaf7",
   "tipo": "student.deleted",
   "ocorrido_em": "2026-11-03T21:06:20.512345+00:00",
   "dados": { "aluno_id": 3 }
 }
 ```
 
+- `evento_id`: um UUID diferente para cada evento. O consumidor usa esse id para não processar o mesmo evento duas vezes.
 - `tipo`: o nome do evento.
 - `ocorrido_em`: data e hora em UTC.
 - `dados`: o conteúdo do evento, que muda de um evento para outro (veja abaixo).
+
+Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `attendance.recorded`) levam em `dados` o campo `destinatario_usuario_id`: o id, no user-service, de quem deve ser notificado. Quem publica já resolve esse id:
+- `teacher.assigned`: o usuário do professor.
+- `grade.recorded` e `attendance.recorded`: o responsável do aluno (`responsavel_usuario_id`) ou, se ele não tiver responsável, o usuário do próprio aluno. O acadêmico consulta o alunos-service para descobrir. Se o alunos-service estiver fora, a nota ou a frequência é gravada do mesmo jeito e o evento sai com `destinatario_usuario_id: null`.
 
 ## Tabela dos eventos
 
@@ -80,6 +86,7 @@ Publicado pelo alunos-service (`aluno_service.py`). Consumido pelo academico-ser
 
 ```json
 {
+  "evento_id": "1eb93a43-debf-41bd-943c-a2f1399ccaf7",
   "tipo": "student.deleted",
   "ocorrido_em": "2026-11-03T21:06:20.512345+00:00",
   "dados": { "aluno_id": 3 }
@@ -106,7 +113,7 @@ Publicado pelo administrativo-service (`atribuicao_service.py`).
 {
   "tipo": "teacher.assigned",
   "ocorrido_em": "2026-11-03T21:14:10.402981+00:00",
-  "dados": { "professor_id": 2, "turma_id": 1, "disciplina_id": 3 }
+  "dados": { "professor_id": 2, "turma_id": 1, "disciplina_id": 3, "destinatario_usuario_id": 4 }
 }
 ```
 
@@ -118,7 +125,15 @@ Publicado pelo academico-service (`nota_service.py`).
 {
   "tipo": "grade.recorded",
   "ocorrido_em": "2026-11-03T21:15:33.887120+00:00",
-  "dados": { "nota_id": 1, "matricula_id": 4, "disciplina_id": 1, "descricao": "AV1", "valor": 8.5 }
+  "dados": {
+    "nota_id": 1,
+    "matricula_id": 4,
+    "disciplina_id": 1,
+    "descricao": "AV1",
+    "valor": 8.5,
+    "aluno_id": 1,
+    "destinatario_usuario_id": 16
+  }
 }
 ```
 
@@ -130,6 +145,13 @@ Publicado pelo academico-service (`frequencia_service.py`).
 {
   "tipo": "attendance.recorded",
   "ocorrido_em": "2026-11-03T21:16:05.220347+00:00",
-  "dados": { "frequencia_id": 1, "matricula_id": 4, "data": "2026-11-03", "situacao": "PRESENTE" }
+  "dados": {
+    "frequencia_id": 1,
+    "matricula_id": 4,
+    "data": "2026-11-03",
+    "situacao": "PRESENTE",
+    "aluno_id": 1,
+    "destinatario_usuario_id": 16
+  }
 }
 ```
