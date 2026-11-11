@@ -5,6 +5,7 @@ O `compose.yaml` sobe o sistema inteiro:
 | Container | O que é |
 | --- | --- |
 | `gateway` | Nginx, porta 8080. Única porta que o frontend usa |
+| `frontend` | React compilado servido por Nginx, porta 3000 (http://localhost:3000). Não rode junto com `npm run dev`, que usa a mesma porta |
 | `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
 | `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |

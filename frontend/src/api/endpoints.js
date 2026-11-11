@@ -1,4 +1,4 @@
-import { requisicao } from './cliente';
+import { ErroApi, requisicao } from './cliente';
 
 export function fazerLogin(email, senha) {
   return requisicao('/auth/login', { metodo: 'POST', corpo: { email, senha }, autenticado: false });
@@ -98,9 +98,15 @@ const modulosFalsos = import.meta.glob('./notificacoesFalsas.js', { eager: true 
 const notificacoesFalsas =
   import.meta.env.VITE_NOTIFICACOES_FALSAS === 'true' ? modulosFalsos['./notificacoesFalsas.js'] : undefined;
 
-export function listarNotificacoes() {
+export async function listarNotificacoes() {
   if (notificacoesFalsas) return notificacoesFalsas.listar();
-  return requisicao('/notificacoes');
+  try {
+    return await requisicao('/notificacoes');
+  } catch (erro) {
+    // A 404 on the list means the gateway has no route for it yet (comunicacao-service not deployed)
+    if (erro.status === 404) throw new ErroApi(503, 'Serviço de notificações indisponível no momento');
+    throw erro;
+  }
 }
 
 export function marcarNotificacaoComoLida(id) {

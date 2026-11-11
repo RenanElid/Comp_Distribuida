@@ -240,6 +240,24 @@ services:
       academico-service:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vite writes this URL into the JS at build time: it must be reachable from the browser, not from inside Docker
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080/api}
+    restart: unless-stopped
+    ports:
+      # Same port as "npm run dev" and the one allowed by the gateway CORS (CORS_ORIGIN): run one or the other
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-T", "3", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # No depends_on: it only serves static files, so it starts even with the backend down
+    # and the pages show "Serviço indisponível" until the gateway answers.
+
 volumes:
   kafka_data:
   user_db_data:
