@@ -1,4 +1,4 @@
-# Docker (semanas 3-4)
+# Docker
 
 O `compose.yaml` sobe o sistema inteiro:
 
@@ -26,10 +26,28 @@ A ordem de subida é automática:
 
 1. cada banco sobe e fica `healthy`;
 2. o Flyway daquele banco roda as migrations de `sql/<serviço>/` e termina;
-3. só então o serviço sobe;
+3. cada serviço sobe quando o Flyway dele termina;
 4. o gateway sobe quando os 4 serviços estão `healthy`.
 
 O Flyway roda de novo a cada `docker compose up`. Quando não há migration nova, ele só confere e termina (`Schema "public" is up to date`).
+
+O Kafka sobe em paralelo. Seu health check valida a conexão em `kafka:19092`. Para iniciar a API sem o broker, use `docker compose up -d --build gateway` com o Kafka parado. Para retomar a publicação de eventos, rode `docker compose up -d --wait kafka`.
+
+O `/health` de cada serviço verifica o próprio banco. O `/health` do gateway verifica o Nginx. Assim, uma falha no administrativo pode ser demonstrada sem tirar o gateway do ar.
+
+## Demo de falha e recuperação
+
+O gateway dá ao backend 2 segundos para conectar e, após a conexão, até 10 segundos entre envios e 25 segundos entre leituras. O prazo de leitura deixa o acadêmico concluir as consultas com retry.
+
+Com a stack local rodando e os dados de seed disponíveis, use PowerShell 7.4 ou superior:
+
+```powershell
+pwsh -File ./scripts/demo-resiliencia.ps1
+```
+
+O script tenta matricular o aluno `1` em uma turma inexistente. Espera `404` antes da falha, para apenas o administrativo e espera `503` do acadêmico via gateway. Em seguida, religa o administrativo e espera o `404` voltar. A turma inexistente evita gravar uma matrícula durante a demo.
+
+Para mostrar o circuito abrindo, suba apenas uma réplica do acadêmico e rode o script com `-PedidosDuranteFalha 6`. A sexta resposta deve ser mais rápida porque o acadêmico já abriu o circuito após cinco falhas. Consulte `docker compose logs academico-service` para mostrar a abertura e o fechamento do circuito.
 
 ## Bancos
 
