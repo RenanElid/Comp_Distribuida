@@ -47,7 +47,7 @@ class AlunoService:
             if self.aluno_repository.buscar_por_matricula(dados.matricula):
                 raise HTTPException(status.HTTP_409_CONFLICT, "Matrícula já cadastrada")
 
-        for campo, valor in dados.model_dump(exclude_none=True).items():
+        for campo, valor in dados.model_dump(exclude_unset=True).items():
             setattr(aluno, campo, valor)
         return self.aluno_repository.salvar(aluno)
 

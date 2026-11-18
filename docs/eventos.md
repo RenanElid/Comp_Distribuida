@@ -140,10 +140,14 @@ Publicado pelo academico-service (`nota_service.py`).
     "descricao": "AV1",
     "valor": 8.5,
     "aluno_id": 1,
+    "aluno_nome": "Ana Souza",
+    "disciplina_nome": "Matemática",
     "destinatario_usuario_id": 16
   }
 }
 ```
+
+A notificação sai assim: `Nova nota de Ana Souza em Matemática: 8,5 (AV1)`. O acadêmico busca o nome do aluno no alunos-service (na mesma consulta do destinatário) e o nome da disciplina no administrativo. Se um deles estiver fora, o campo sai `null` e a mensagem fica `Nova nota lançada: 8,5 (AV1)`.
 
 ### attendance.recorded
 

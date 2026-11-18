@@ -48,10 +48,17 @@ def buscar_aluno(aluno_id: int, token: str) -> dict:
     circuito_alunos.registrar_falha()
     raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Serviço de alunos indisponível")
 
-def buscar_destinatario(aluno_id: int, token: str) -> int | None:
+def buscar_para_evento(aluno_id: int, token: str) -> dict | None:
     try:
-        aluno = buscar_aluno(aluno_id, token)
+        return buscar_aluno(aluno_id, token)
     except HTTPException as erro:
-        logger.warning("Notificação do aluno %s sem destinatário: %s", aluno_id, erro.detail)
+        logger.warning("Evento do aluno %s sem os dados do aluno: %s", aluno_id, erro.detail)
+        return None
+
+def destinatario_do_aluno(aluno: dict | None) -> int | None:
+    if aluno is None:
         return None
     return aluno["responsavel_usuario_id"] or aluno["usuario_id"]
+
+def buscar_destinatario(aluno_id: int, token: str) -> int | None:
+    return destinatario_do_aluno(buscar_para_evento(aluno_id, token))

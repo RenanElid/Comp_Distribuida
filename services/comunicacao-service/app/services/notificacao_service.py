@@ -48,8 +48,18 @@ class NotificacaoService:
 
     def montar_mensagem(self, topico: str, dados: dict) -> tuple[str, str]:
         if topico == "grade.recorded":
-            return "NOTA_LANCADA", f"Nova nota lançada: {dados['descricao']} = {dados['valor']}"
+            return "NOTA_LANCADA", self.mensagem_da_nota(dados)
         if topico == "attendance.recorded":
             dia = date.fromisoformat(dados["data"]).strftime("%d/%m/%Y")
             return "FREQUENCIA_REGISTRADA", f"Frequência de {dia}: {dados['situacao'].lower()}"
         return "PROFESSOR_ATRIBUIDO", f"Você foi atribuído à disciplina {dados['disciplina_id']} da turma {dados['turma_id']}"
+
+    def mensagem_da_nota(self, dados: dict) -> str:
+        valor = dados["valor"]
+        casas = 1 if round(valor, 1) == valor else 2
+        valor_formatado = f"{valor:.{casas}f}".replace(".", ",")
+        aluno = dados.get("aluno_nome")
+        disciplina = dados.get("disciplina_nome")
+        if aluno and disciplina:
+            return f"Nova nota de {aluno} em {disciplina}: {valor_formatado} ({dados['descricao']})"
+        return f"Nova nota lançada: {valor_formatado} ({dados['descricao']})"
