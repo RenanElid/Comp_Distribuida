@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.clients import alunos_client
+from app.clients import administrativo_client, alunos_client
 from app.eventos import publicar_evento
 from app.models import Nota
 from app.repositories.matricula_repository import MatriculaRepository
@@ -17,6 +17,8 @@ class NotaService:
         matricula = self.matricula_repository.buscar_por_id(dados.matricula_id)
         if matricula is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Matrícula não encontrada")
+        if dados.disciplina_id not in administrativo_client.listar_disciplinas_da_turma(matricula.turma_id, token):
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Disciplina não pertence à turma desta matrícula")
 
         nota = Nota(
             matricula_id=dados.matricula_id,
