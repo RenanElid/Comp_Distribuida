@@ -42,6 +42,13 @@ export function excluirAluno(id) {
   return requisicao(`/alunos/${id}`, { metodo: 'DELETE' });
 }
 
+// PARENT users for the "Responsável" field. GET /usuarios is ADMIN only, like the student form itself.
+// One page of 100 is enough for the project; the route has no search by name.
+export async function listarResponsaveis() {
+  const pagina = await requisicao('/usuarios', { params: { perfil: 'PARENT', tamanho: 100 } });
+  return pagina.itens.filter((usuario) => usuario.ativo);
+}
+
 export function listarProfessores() {
   return requisicao('/professores');
 }

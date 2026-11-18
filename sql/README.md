@@ -83,3 +83,7 @@ Atencao: os arquivos nao sao reentrantes. Rodar o mesmo arquivo duas vezes gera 
 - `alunos.responsavel_usuario_id` (opcional) aponta para o usuario PARENT responsavel pelo aluno no user_db. No seed, a aluna Ana Souza (2026001) tem a Maria (usuario 16) como responsavel.
 - `matriculas.ano_letivo` e copiado da turma no momento da matricula, e `UNIQUE (aluno_id, ano_letivo)` garante uma turma por aluno por ano letivo. Matriculas antigas sem ano letivo ficam NULL e nao entram na regra.
 - `notificacoes` guarda as notificacoes de cada usuario (`usuario_id` do destinatario, enviado no evento por quem publica). `eventos_processados` evita notificar duas vezes o mesmo evento do Kafka: o consumidor grava o id do evento na mesma transacao da notificacao.
+
+## Problemas conhecidos
+
+- **V6 do academico_db em banco com dados antigos.** A V6 preenche `ano_letivo = 2026` nas matriculas das turmas 1 e 2 e depois cria `UNIQUE (aluno_id, ano_letivo)`. Se o banco local tiver um aluno matriculado nas duas turmas (dados criados em testes antigos), a regra nao consegue ser criada e o `flyway-academico` termina com erro. Num banco novo isso nao acontece. Para resolver: apagar as matriculas duplicadas desse aluno (as notas e frequencias delas somem junto, pelo `ON DELETE CASCADE`) ou recriar o banco local com `docker compose down -v` (apaga todos os dados locais). A V6 nao deve ser editada: ela ja foi aplicada em outros bancos e o Flyway recusaria o checksum diferente.

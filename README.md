@@ -28,12 +28,12 @@ Precisa do Docker (Docker Desktop ou OrbStack) aberto. Todos os comandos são ro
 
 ```bash
 cp .env.example .env
-for servico in user administrativo alunos academico; do
+for servico in user administrativo alunos academico comunicacao; do
   cp services/$servico-service/.env.example services/$servico-service/.env
 done
 ```
 
-**2. Trocar a senha do banco e a chave do JWT.** A senha tem que ser a mesma no `.env` da raiz e nos 4 serviços, e a chave do JWT tem que ser **igual nos 4 serviços**. Os comandos abaixo fazem isso de uma vez (use uma senha sem `/`, `@` e `:`):
+**2. Trocar a senha do banco e a chave do JWT.** A senha tem que ser a mesma no `.env` da raiz e nos 5 serviços, e a chave do JWT tem que ser **igual nos 5 serviços** (se o comunicacao-service tiver uma chave diferente, o login funciona mas a página de notificações devolve 401). Os comandos abaixo fazem isso de uma vez (use uma senha sem `/`, `@` e `:`):
 
 ```bash
 SENHA=minha-senha-local
@@ -42,11 +42,15 @@ sed -i '' "s/troque-esta-senha-local/$SENHA/" .env services/*/.env
 sed -i '' "s/troque-por-uma-chave-com-pelo-menos-32-caracteres/$CHAVE/" services/*/.env
 ```
 
+O `sed -i ''` é a sintaxe do macOS. No Linux e no Git Bash do Windows, use `sed -i` sem o `''`.
+
 **3. Subir tudo:**
 
 ```bash
-docker compose up -d --build
+docker compose --profile comunicacao up -d --build
 ```
+
+O `--profile comunicacao` sobe também o serviço de notificações (comunicacao-service, banco e Flyway). Sem ele, o resto do sistema funciona e a página de notificações mostra "indisponível".
 
 **4. Conferir:**
 
@@ -54,7 +58,7 @@ docker compose up -d --build
 docker compose ps -a
 ```
 
-O gateway, os 4 serviços, os 4 bancos e o Kafka devem aparecer como `healthy`. Os 4 `flyway-...` aparecem como `Exited (0)`: eles criam as tabelas e terminam.
+O gateway, o frontend, os 5 serviços, os 5 bancos e o Kafka devem aparecer como `healthy`. Os 5 `flyway-...` aparecem como `Exited (0)`: eles criam as tabelas e terminam.
 
 **5. Fazer login pelo gateway** com um usuário de teste do seed:
 
