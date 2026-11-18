@@ -9,13 +9,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  MenuItem,
   Paper,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { atualizarAluno, buscarAluno, criarAluno, excluirAluno } from '../api/endpoints';
+import { atualizarAluno, buscarAluno, criarAluno, excluirAluno, listarResponsaveis } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
 import { useAuth } from '../contexto/AuthContext';
 import { podeEditarAlunos } from '../utils/permissoes';
@@ -28,6 +29,7 @@ const VALORES_INICIAIS = {
   data_nascimento: '',
   endereco: '',
   contato: '',
+  responsavel_usuario_id: '',
 };
 const CAMPOS_DO_FORM = Object.keys(VALORES_INICIAIS);
 
@@ -57,6 +59,20 @@ export default function AlunoForm() {
   const [errosCampos, setErrosCampos] = useState({});
   const [erroGeral, setErroGeral] = useState(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  const [responsaveis, setResponsaveis] = useState({ lista: [], erro: null });
+  const [responsavelOriginal, setResponsavelOriginal] = useState(null);
+
+  // Independent from the student: if the user-service is down, the form still works without this field
+  useEffect(() => {
+    if (!permitido) return;
+    let ignorar = false;
+    listarResponsaveis()
+      .then((lista) => !ignorar && setResponsaveis({ lista, erro: null }))
+      .catch((erro) => !ignorar && setResponsaveis({ lista: [], erro }));
+    return () => {
+      ignorar = true;
+    };
+  }, [permitido]);
 
   useEffect(() => {
     if (!editando || !permitido) return;
@@ -71,8 +87,10 @@ export default function AlunoForm() {
           data_nascimento: aluno.data_nascimento,
           endereco: aluno.endereco ?? '',
           contato: aluno.contato ?? '',
+          responsavel_usuario_id: aluno.responsavel_usuario_id ?? '',
         });
         setNomeOriginal(aluno.nome);
+        setResponsavelOriginal(aluno.responsavel_usuario_id);
       })
       .catch((e) => {
         if (ignorar) return;
@@ -107,6 +125,10 @@ export default function AlunoForm() {
       endereco: opcional('endereco'),
       contato: opcional('contato'),
     };
+    // Sent only when chosen: the PUT ignores null (exclude_none), so an existing link cannot be removed yet
+    if (valores.responsavel_usuario_id !== '') {
+      corpo.responsavel_usuario_id = Number(valores.responsavel_usuario_id);
+    }
     if (!editando) {
       corpo.email = texto('email');
       corpo.senha = valores.senha; // never trim a password
@@ -235,6 +257,34 @@ export default function AlunoForm() {
           </Box>
           <TextField label="Endereço" {...propsDoCampo('endereco')} />
           <TextField label="Contato" {...propsDoCampo('contato')} />
+          <Box sx={{ gridColumn: { sm: 'span 2' } }}>
+            <TextField
+              select
+              label="Responsável"
+              {...propsDoCampo('responsavel_usuario_id')}
+              disabled={enviando || Boolean(responsaveis.erro)}
+              helperText={
+                errosCampos.responsavel_usuario_id ??
+                (responsaveis.erro
+                  ? 'Não foi possível carregar os responsáveis; o resto do cadastro pode ser salvo'
+                  : 'Usuário com perfil Responsável que recebe as notificações de notas e frequência')
+              }
+            >
+              {/* Removing an existing link is not supported by the backend yet (PUT ignores null) */}
+              <MenuItem value="" disabled={editando && responsavelOriginal != null}>
+                Sem responsável
+              </MenuItem>
+              {responsaveis.lista.map((responsavel) => (
+                <MenuItem key={responsavel.id} value={responsavel.id}>
+                  {responsavel.email}
+                </MenuItem>
+              ))}
+              {/* Linked user that is no longer listed (e.g. deactivated): keep it selectable so the value shows */}
+              {responsavelOriginal != null && !responsaveis.lista.some((r) => r.id === responsavelOriginal) && (
+                <MenuItem value={responsavelOriginal}>Usuário #{responsavelOriginal}</MenuItem>
+              )}
+            </TextField>
+          </Box>
         </Box>
 
         <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
