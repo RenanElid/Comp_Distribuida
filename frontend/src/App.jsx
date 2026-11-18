@@ -6,6 +6,7 @@ import Alunos from './paginas/Alunos';
 import Inicio from './paginas/Inicio';
 import Login from './paginas/Login';
 import MatriculaDetalhe from './paginas/MatriculaDetalhe';
+import Notificacoes from './paginas/Notificacoes';
 import Professores from './paginas/Professores';
 import TurmaDetalhe from './paginas/TurmaDetalhe';
 import Turmas from './paginas/Turmas';
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/turmas" element={<Turmas />} />
           <Route path="/turmas/:id" element={<TurmaDetalhe />} />
           <Route path="/matriculas/:id" element={<MatriculaDetalhe />} />
+          <Route path="/notificacoes" element={<Notificacoes />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

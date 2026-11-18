@@ -1,4 +1,4 @@
-import { requisicao } from './cliente';
+import { ErroApi, requisicao } from './cliente';
 
 export function fazerLogin(email, senha) {
   return requisicao('/auth/login', { metodo: 'POST', corpo: { email, senha }, autenticado: false });
@@ -89,4 +89,23 @@ export function listarFrequencias(matricula_id) {
 
 export function registrarFrequencia(dados) {
   return requisicao('/frequencias', { metodo: 'POST', corpo: dados });
+}
+
+// 404: gateway without the route; 502/503/504: comunicacao-service stopped or not started
+// (it only runs with "docker compose --profile comunicacao"). All mean the same to the user.
+const STATUS_SERVICO_FORA = [404, 502, 503, 504];
+
+export async function listarNotificacoes() {
+  try {
+    return await requisicao('/notificacoes');
+  } catch (erro) {
+    if (STATUS_SERVICO_FORA.includes(erro.status)) {
+      throw new ErroApi(503, 'Serviço de notificações indisponível no momento');
+    }
+    throw erro;
+  }
+}
+
+export function marcarNotificacaoComoLida(id) {
+  return requisicao(`/notificacoes/${id}/lida`, { metodo: 'PATCH' });
 }

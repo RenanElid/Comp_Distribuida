@@ -1,5 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
 const CHAVE_TOKEN = 'distrischool_token';
+// The academico-service retries up to 3 times (3s timeout + 0.5s wait each), about 10s in the worst case,
+// before answering 503. 15s lets that clean 503 arrive instead of cutting it off with a timeout.
+const TEMPO_LIMITE_MS = 15000;
 
 export class ErroApi extends Error {
   // campos: {nome_do_campo: "mensagem"} for 422 errors, null otherwise
@@ -106,8 +109,16 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, params, auten
       method: metodo,
       headers,
       body: corpo !== undefined ? JSON.stringify(corpo) : undefined,
+      signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
     });
-  } catch {
+  } catch (erro) {
+    if (erro.name === 'TimeoutError') {
+      // On a write the backend may have saved it before the timeout; retrying blindly could duplicate a grade
+      if (metodo !== 'GET') {
+        throw new ErroApi(0, 'O servidor demorou para responder e não sabemos se a operação foi gravada. Confira antes de tentar de novo.');
+      }
+      throw new ErroApi(0, 'O servidor demorou para responder. Tente novamente.');
+    }
     // fetch only throws on network failure (gateway down, CORS blocked)
     throw new ErroApi(0, 'Não foi possível conectar ao servidor');
   }
