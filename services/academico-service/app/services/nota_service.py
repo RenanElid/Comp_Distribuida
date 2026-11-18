@@ -28,6 +28,7 @@ class NotaService:
         )
         nota = self.nota_repository.salvar(nota)
 
+        aluno = alunos_client.buscar_para_evento(matricula.aluno_id, token)
         publicar_evento(
             "grade.recorded",
             {
@@ -37,7 +38,9 @@ class NotaService:
                 "descricao": nota.descricao,
                 "valor": float(nota.valor),
                 "aluno_id": matricula.aluno_id,
-                "destinatario_usuario_id": alunos_client.buscar_destinatario(matricula.aluno_id, token),
+                "aluno_nome": aluno["nome"] if aluno else None,
+                "disciplina_nome": administrativo_client.buscar_nome_da_disciplina(nota.disciplina_id, token),
+                "destinatario_usuario_id": alunos_client.destinatario_do_aluno(aluno),
             },
         )
         return nota

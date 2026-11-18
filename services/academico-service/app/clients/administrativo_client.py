@@ -54,3 +54,10 @@ def buscar_turma(turma_id: int, token: str) -> dict:
 def listar_disciplinas_da_turma(turma_id: int, token: str) -> list[int]:
     atribuicoes = consultar(f"/turmas/{turma_id}/atribuicoes", token, "Turma não encontrada")
     return [atribuicao["disciplina_id"] for atribuicao in atribuicoes]
+
+def buscar_nome_da_disciplina(disciplina_id: int, token: str) -> str | None:
+    try:
+        return consultar(f"/disciplinas/{disciplina_id}", token, "Disciplina não encontrada")["nome"]
+    except HTTPException as erro:
+        logger.warning("Evento da disciplina %s sem o nome da disciplina: %s", disciplina_id, erro.detail)
+        return None
