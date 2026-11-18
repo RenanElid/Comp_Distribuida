@@ -26,7 +26,8 @@ class AtribuicaoService:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Turma não encontrada")
         if self.disciplina_repository.buscar_por_id(dados.disciplina_id) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Disciplina não encontrada")
-        if self.professor_repository.buscar_por_id(dados.professor_id) is None:
+        professor = self.professor_repository.buscar_por_id(dados.professor_id)
+        if professor is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Professor não encontrado")
         if self.atribuicao_repository.buscar_por_turma_e_disciplina(turma_id, dados.disciplina_id):
             raise HTTPException(status.HTTP_409_CONFLICT, "Esta disciplina já tem professor nesta turma")
@@ -40,7 +41,12 @@ class AtribuicaoService:
 
         publicar_evento(
             "teacher.assigned",
-            {"professor_id": atribuicao.professor_id, "turma_id": turma_id, "disciplina_id": atribuicao.disciplina_id},
+            {
+                "professor_id": atribuicao.professor_id,
+                "turma_id": turma_id,
+                "disciplina_id": atribuicao.disciplina_id,
+                "destinatario_usuario_id": professor.usuario_id,
+            },
         )
         return atribuicao
 

@@ -14,15 +14,21 @@ Toda mensagem tem o mesmo formato (o "envelope"):
 
 ```json
 {
+  "evento_id": "1eb93a43-debf-41bd-943c-a2f1399ccaf7",
   "tipo": "student.deleted",
   "ocorrido_em": "2026-11-03T21:06:20.512345+00:00",
   "dados": { "aluno_id": 3 }
 }
 ```
 
+- `evento_id`: um UUID diferente para cada evento. O consumidor usa esse id para não processar o mesmo evento duas vezes.
 - `tipo`: o nome do evento.
 - `ocorrido_em`: data e hora em UTC.
 - `dados`: o conteúdo do evento, que muda de um evento para outro (veja abaixo).
+
+Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `attendance.recorded`) levam em `dados` o campo `destinatario_usuario_id`: o id, no user-service, de quem deve ser notificado. Quem publica já resolve esse id:
+- `teacher.assigned`: o usuário do professor.
+- `grade.recorded` e `attendance.recorded`: o responsável do aluno (`responsavel_usuario_id`) ou, se ele não tiver responsável, o usuário do próprio aluno. O acadêmico consulta o alunos-service para descobrir. Se o alunos-service estiver fora, a nota ou a frequência é gravada do mesmo jeito e o evento sai com `destinatario_usuario_id: null`.
 
 ## Tabela dos eventos
 
@@ -32,9 +38,9 @@ Toda mensagem tem o mesmo formato (o "envelope"):
 | `student.created` | alunos-service | Depois de cadastrar um aluno | (notificações, futuro) | — |
 | `student.deleted` | alunos-service | Depois de excluir um aluno | academico-service | Apaga as matrículas do aluno (e as notas e frequências delas) |
 | `class.deleted` | administrativo-service | Depois de excluir uma turma | academico-service | Apaga as matrículas da turma (e as notas e frequências delas) |
-| `teacher.assigned` | administrativo-service | Depois de atribuir um professor a uma disciplina numa turma | (notificações, futuro) | — |
-| `grade.recorded` | academico-service | Depois de lançar uma nota | (notificações, futuro) | — |
-| `attendance.recorded` | academico-service | Depois de registrar uma frequência | (notificações aos pais, futuro) | — |
+| `teacher.assigned` | administrativo-service | Depois de atribuir um professor a uma disciplina numa turma | comunicacao-service | Cria a notificação `PROFESSOR_ATRIBUIDO` para o professor |
+| `grade.recorded` | academico-service | Depois de lançar uma nota | comunicacao-service | Cria a notificação `NOTA_LANCADA` para o responsável (ou o aluno) |
+| `attendance.recorded` | academico-service | Depois de registrar uma frequência | comunicacao-service | Cria a notificação `FREQUENCIA_REGISTRADA` para o responsável (ou o aluno) |
 
 ## O consumidor do acadêmico
 
@@ -45,6 +51,14 @@ Toda mensagem tem o mesmo formato (o "envelope"):
 - Processar o mesmo evento duas vezes não dá erro: na segunda vez não há mais matrícula para apagar.
 - Uma mensagem com JSON inválido, ou que dá erro ao ser tratada, é registrada no log, e o consumidor segue para a próxima.
 - Cada evento recebido aparece no log assim: `Evento student.deleted recebido: {'aluno_id': 3}`.
+
+## O consumidor do comunicacao
+
+- Fica em `services/comunicacao-service/app/consumidor.py`.
+- Lê os tópicos `grade.recorded`, `attendance.recorded` e `teacher.assigned` com o grupo `comunicacao-service`, a partir do evento mais antigo que ainda não leu.
+- Para cada evento, grava a notificação para o `destinatario_usuario_id` e grava o `evento_id` na tabela `eventos_processados`, na mesma transação.
+- Se o `evento_id` já está em `eventos_processados`, o evento é ignorado. Assim, ler o mesmo evento duas vezes não cria notificação repetida.
+- Evento sem `evento_id` (dos que foram publicados antes dessa mudança) é ignorado. Evento com `destinatario_usuario_id: null` é marcado como processado, mas não gera notificação.
 
 ## Exemplo de cada evento
 
@@ -80,6 +94,7 @@ Publicado pelo alunos-service (`aluno_service.py`). Consumido pelo academico-ser
 
 ```json
 {
+  "evento_id": "1eb93a43-debf-41bd-943c-a2f1399ccaf7",
   "tipo": "student.deleted",
   "ocorrido_em": "2026-11-03T21:06:20.512345+00:00",
   "dados": { "aluno_id": 3 }
@@ -106,7 +121,7 @@ Publicado pelo administrativo-service (`atribuicao_service.py`).
 {
   "tipo": "teacher.assigned",
   "ocorrido_em": "2026-11-03T21:14:10.402981+00:00",
-  "dados": { "professor_id": 2, "turma_id": 1, "disciplina_id": 3 }
+  "dados": { "professor_id": 2, "turma_id": 1, "disciplina_id": 3, "destinatario_usuario_id": 4 }
 }
 ```
 
@@ -118,7 +133,15 @@ Publicado pelo academico-service (`nota_service.py`).
 {
   "tipo": "grade.recorded",
   "ocorrido_em": "2026-11-03T21:15:33.887120+00:00",
-  "dados": { "nota_id": 1, "matricula_id": 4, "disciplina_id": 1, "descricao": "AV1", "valor": 8.5 }
+  "dados": {
+    "nota_id": 1,
+    "matricula_id": 4,
+    "disciplina_id": 1,
+    "descricao": "AV1",
+    "valor": 8.5,
+    "aluno_id": 1,
+    "destinatario_usuario_id": 16
+  }
 }
 ```
 
@@ -130,6 +153,13 @@ Publicado pelo academico-service (`frequencia_service.py`).
 {
   "tipo": "attendance.recorded",
   "ocorrido_em": "2026-11-03T21:16:05.220347+00:00",
-  "dados": { "frequencia_id": 1, "matricula_id": 4, "data": "2026-11-03", "situacao": "PRESENTE" }
+  "dados": {
+    "frequencia_id": 1,
+    "matricula_id": 4,
+    "data": "2026-11-03",
+    "situacao": "PRESENTE",
+    "aluno_id": 1,
+    "destinatario_usuario_id": 16
+  }
 }
 ```

@@ -8,6 +8,7 @@ Quatro serviços em Python + FastAPI, cada um com o seu próprio banco PostgreSQ
 | `administrativo-service` | 8002 | `administrativo_db` | Professores, técnicos, disciplinas, turmas e atribuições (qual professor dá qual disciplina em qual turma) |
 | `alunos-service` | 8003 | `alunos_db` | Cadastro, busca e dados do aluno |
 | `academico-service` | 8004 | `academico_db` | Matrículas, notas e frequência |
+| `comunicacao-service` | 8007 | `comunicacao_db` | Notificações: transforma eventos do Kafka em avisos para cada usuário |
 
 O frontend fala só com o **gateway** (`http://localhost:8080`), usando as rotas com o prefixo `/api`. As portas 8001 a 8004 ficam abertas só para o Swagger de cada serviço: `http://localhost:8001/docs`, `http://localhost:8002/docs`, `http://localhost:8003/docs` e `http://localhost:8004/docs`. Com 3 cópias do acadêmico, elas ficam nas portas 8004, 8005 e 8006 (veja qual é qual com `docker compose ps academico-service`).
 
@@ -94,6 +95,17 @@ Todas as rotas do acadêmico são para ADMIN ou TEACHER.
 | GET | `/api/notas?matricula_id=&disciplina_id=` | Lista as notas da matrícula, com a média calculada na hora. Com `disciplina_id`, a média é só daquela disciplina |
 | POST | `/api/frequencias` | Registra a frequência de um dia (`PRESENTE`, `FALTA` ou `ATRASO`) |
 | GET | `/api/frequencias?matricula_id=` | Lista a frequência da matrícula |
+
+**comunicacao-service**
+
+Qualquer usuário logado. Cada um vê e marca só as próprias notificações.
+
+| Método | Rota | O que faz |
+| --- | --- | --- |
+| GET | `/api/notificacoes` | Lista as notificações do usuário logado, da mais nova para a mais antiga |
+| PATCH | `/api/notificacoes/{id}/lida` | Marca a notificação como lida (404 se ela for de outro usuário) |
+
+As notificações nascem dos eventos `grade.recorded`, `attendance.recorded` e `teacher.assigned`, para o `destinatario_usuario_id` que vem no evento (veja [docs/eventos.md](../docs/eventos.md)).
 
 Exemplos (com o `TOKEN` do login, como no [README.md da raiz](../README.md)):
 
@@ -185,6 +197,14 @@ O `JWT_SECRET` tem que ser **igual nos 4 serviços**. A senha dentro do `DATABAS
 | `ALUNOS_SERVICE_URL` | `http://alunos-service:8003` |
 | `ADMINISTRATIVO_SERVICE_URL` | `http://administrativo-service:8002` |
 | `KAFKA_BOOTSTRAP_SERVERS` | `kafka:19092` (sem essa variável, o consumidor do Kafka não liga) |
+
+**comunicacao-service**
+
+| Variável | Valor no Docker |
+| --- | --- |
+| `DATABASE_URL` | `postgresql+psycopg://distrischool:<senha>@db-comunicacao:5432/comunicacao_db` |
+| `JWT_SECRET` | a mesma chave dos outros serviços |
+| `KAFKA_BOOTSTRAP_SERVERS` | `kafka:19092` (sem essa variável, nenhuma notificação é criada) |
 
 Sem `KAFKA_BOOTSTRAP_SERVERS`, os serviços funcionam normalmente e os eventos vão só para o log.
 

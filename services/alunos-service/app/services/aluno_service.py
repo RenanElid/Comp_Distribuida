@@ -33,6 +33,7 @@ class AlunoService:
             data_nascimento=dados.data_nascimento,
             endereco=dados.endereco,
             contato=dados.contato,
+            responsavel_usuario_id=dados.responsavel_usuario_id,
         )
         aluno = self.aluno_repository.salvar(aluno)
 

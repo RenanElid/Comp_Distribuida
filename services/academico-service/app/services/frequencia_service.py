@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.clients import alunos_client
 from app.eventos import publicar_evento
 from app.models import Frequencia
 from app.repositories.frequencia_repository import FrequenciaRepository
@@ -12,8 +13,9 @@ class FrequenciaService:
         self.frequencia_repository = FrequenciaRepository(db)
         self.matricula_repository = MatriculaRepository(db)
 
-    def registrar(self, dados: FrequenciaCreate) -> Frequencia:
-        if self.matricula_repository.buscar_por_id(dados.matricula_id) is None:
+    def registrar(self, dados: FrequenciaCreate, token: str) -> Frequencia:
+        matricula = self.matricula_repository.buscar_por_id(dados.matricula_id)
+        if matricula is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Matrícula não encontrada")
         if self.frequencia_repository.buscar(dados.matricula_id, dados.data):
             raise HTTPException(status.HTTP_409_CONFLICT, "Frequência já registrada para esta matrícula neste dia")
@@ -28,6 +30,8 @@ class FrequenciaService:
                 "matricula_id": frequencia.matricula_id,
                 "data": frequencia.data.isoformat(),
                 "situacao": frequencia.situacao,
+                "aluno_id": matricula.aluno_id,
+                "destinatario_usuario_id": alunos_client.buscar_destinatario(matricula.aluno_id, token),
             },
         )
         return frequencia
