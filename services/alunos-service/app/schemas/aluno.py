@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 PADRAO_EMAIL = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
@@ -21,6 +21,13 @@ class AlunoUpdate(BaseModel):
     endereco: str | None = Field(default=None, max_length=255)
     contato: str | None = Field(default=None, max_length=100)
     responsavel_usuario_id: int | None = None
+
+    @field_validator("matricula", "nome", "data_nascimento")
+    @classmethod
+    def nao_pode_ser_nulo(cls, valor):
+        if valor is None:
+            raise ValueError("não pode ser nulo")
+        return valor
 
 class AlunoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
