@@ -8,7 +8,7 @@ O `compose.yaml` sobe o sistema inteiro:
 | `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
 | `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
-| `db-comunicacao`, `flyway-comunicacao` | Banco e migrations de notificações, no perfil `comunicacao` |
+| `comunicacao-service`, `db-comunicacao`, `flyway-comunicacao` | Serviço de notificações (porta 8007, para o Swagger), banco e migrations, no perfil `comunicacao` |
 | `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
 
 ## Iniciar
@@ -58,7 +58,7 @@ Para mostrar o circuito abrindo, suba apenas uma réplica do acadêmico e rode o
 | `administrativo_db` | `db-administrativo` | administrativo-service |
 | `alunos_db` | `db-alunos` | alunos-service |
 | `academico_db` | `db-academico` | academico-service |
-| `comunicacao_db` | `db-comunicacao` | comunicacao-service (em desenvolvimento) |
+| `comunicacao_db` | `db-comunicacao` | comunicacao-service |
 
 Os bancos ficam na rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados em seu próprio volume.
 
@@ -76,17 +76,15 @@ docker compose logs flyway-academico
 
 Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`. As migrations ficam em `sql/`; a ordem e os dados de teste estão em [sql/README.md](../sql/README.md).
 
-### Banco de notificações
+### Serviço de notificações
 
-Com as migrations de `sql/comunicacao-service/` no checkout, inicie o banco e aplique o SQL:
+O `comunicacao-service` e o banco dele ficam no perfil `comunicacao`. Para subir tudo junto:
 
 ```bash
-docker compose up -d flyway-comunicacao
-docker compose --profile comunicacao wait flyway-comunicacao
-docker compose --profile comunicacao ps -a db-comunicacao flyway-comunicacao
+docker compose --profile comunicacao up -d --build
 ```
 
-O `db-comunicacao` fica `healthy` e o `flyway-comunicacao` termina com `Exited (0)`. O perfil `comunicacao` permite validar o banco separadamente enquanto o serviço de notificações está em desenvolvimento.
+O `flyway-comunicacao` termina com `Exited (0)` e o `comunicacao-service` fica `healthy`. Sem o perfil, o resto do sistema funciona normalmente e a rota `/api/notificacoes` responde 504.
 
 ## Portas no computador
 
@@ -95,6 +93,7 @@ O `db-comunicacao` fica `healthy` e o `flyway-comunicacao` termina com `Exited (
 | 8080 (`GATEWAY_PORT`) | gateway |
 | 8001, 8002, 8003 | user-service, administrativo-service, alunos-service |
 | 8004 a 8006 | academico-service (uma porta por cópia, com `--scale`) |
+| 8007 | comunicacao-service (perfil `comunicacao`) |
 | 9092 (`KAFKA_PORT`) | kafka |
 
 Todas as portas ficam acessíveis apenas no próprio computador (`127.0.0.1`). Os arquivos `.env` são locais e não entram no Git.
