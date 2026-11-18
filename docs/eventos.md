@@ -38,9 +38,9 @@ Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `atte
 | `student.created` | alunos-service | Depois de cadastrar um aluno | (notificações, futuro) | — |
 | `student.deleted` | alunos-service | Depois de excluir um aluno | academico-service | Apaga as matrículas do aluno (e as notas e frequências delas) |
 | `class.deleted` | administrativo-service | Depois de excluir uma turma | academico-service | Apaga as matrículas da turma (e as notas e frequências delas) |
-| `teacher.assigned` | administrativo-service | Depois de atribuir um professor a uma disciplina numa turma | (notificações, futuro) | — |
-| `grade.recorded` | academico-service | Depois de lançar uma nota | (notificações, futuro) | — |
-| `attendance.recorded` | academico-service | Depois de registrar uma frequência | (notificações aos pais, futuro) | — |
+| `teacher.assigned` | administrativo-service | Depois de atribuir um professor a uma disciplina numa turma | comunicacao-service | Cria a notificação `PROFESSOR_ATRIBUIDO` para o professor |
+| `grade.recorded` | academico-service | Depois de lançar uma nota | comunicacao-service | Cria a notificação `NOTA_LANCADA` para o responsável (ou o aluno) |
+| `attendance.recorded` | academico-service | Depois de registrar uma frequência | comunicacao-service | Cria a notificação `FREQUENCIA_REGISTRADA` para o responsável (ou o aluno) |
 
 ## O consumidor do acadêmico
 
@@ -51,6 +51,14 @@ Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `atte
 - Processar o mesmo evento duas vezes não dá erro: na segunda vez não há mais matrícula para apagar.
 - Uma mensagem com JSON inválido, ou que dá erro ao ser tratada, é registrada no log, e o consumidor segue para a próxima.
 - Cada evento recebido aparece no log assim: `Evento student.deleted recebido: {'aluno_id': 3}`.
+
+## O consumidor do comunicacao
+
+- Fica em `services/comunicacao-service/app/consumidor.py`.
+- Lê os tópicos `grade.recorded`, `attendance.recorded` e `teacher.assigned` com o grupo `comunicacao-service`, a partir do evento mais antigo que ainda não leu.
+- Para cada evento, grava a notificação para o `destinatario_usuario_id` e grava o `evento_id` na tabela `eventos_processados`, na mesma transação.
+- Se o `evento_id` já está em `eventos_processados`, o evento é ignorado. Assim, ler o mesmo evento duas vezes não cria notificação repetida.
+- Evento sem `evento_id` (dos que foram publicados antes dessa mudança) é ignorado. Evento com `destinatario_usuario_id: null` é marcado como processado, mas não gera notificação.
 
 ## Exemplo de cada evento
 
