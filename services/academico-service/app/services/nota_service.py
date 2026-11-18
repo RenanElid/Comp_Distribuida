@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.clients import alunos_client
 from app.eventos import publicar_evento
 from app.models import Nota
 from app.repositories.matricula_repository import MatriculaRepository
@@ -12,8 +13,9 @@ class NotaService:
         self.nota_repository = NotaRepository(db)
         self.matricula_repository = MatriculaRepository(db)
 
-    def lancar(self, dados: NotaCreate) -> Nota:
-        if self.matricula_repository.buscar_por_id(dados.matricula_id) is None:
+    def lancar(self, dados: NotaCreate, token: str) -> Nota:
+        matricula = self.matricula_repository.buscar_por_id(dados.matricula_id)
+        if matricula is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Matrícula não encontrada")
 
         nota = Nota(
@@ -32,6 +34,8 @@ class NotaService:
                 "disciplina_id": nota.disciplina_id,
                 "descricao": nota.descricao,
                 "valor": float(nota.valor),
+                "aluno_id": matricula.aluno_id,
+                "destinatario_usuario_id": alunos_client.buscar_destinatario(matricula.aluno_id, token),
             },
         )
         return nota
