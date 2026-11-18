@@ -1,7 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
 const CHAVE_TOKEN = 'distrischool_token';
-// The academico-service retries up to 3 times with a 3s timeout each, so 10s still fits one full attempt cycle
-const TEMPO_LIMITE_MS = 10000;
+// The academico-service retries up to 3 times (3s timeout + 0.5s wait each), about 10s in the worst case,
+// before answering 503. 15s lets that clean 503 arrive instead of cutting it off with a timeout.
+const TEMPO_LIMITE_MS = 15000;
 
 export class ErroApi extends Error {
   // campos: {nome_do_campo: "mensagem"} for 422 errors, null otherwise

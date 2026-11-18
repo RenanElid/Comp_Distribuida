@@ -11,10 +11,10 @@ Existem duas formas. As duas usam a porta 3000, então rode uma ou a outra.
 Na raiz do repositório:
 
 ```
-docker compose up -d --build
+docker compose --profile comunicacao up -d --build
 ```
 
-Abra http://localhost:3000. O `--build` é necessário sempre que o código mudar, senão o Docker reaproveita a imagem antiga.
+Abra http://localhost:3000. O `--profile comunicacao` sobe também o serviço de notificações (sem ele, a página de notificações mostra "indisponível"). O `--build` é necessário sempre que o código mudar, senão o Docker reaproveita a imagem antiga.
 
 ### 2. Em modo de desenvolvimento (recarrega ao salvar)
 
@@ -68,9 +68,9 @@ As permissões no frontend só escondem botões e menus. Quem bloqueia de verdad
 ## Resiliência
 
 - Se um serviço cai, só a parte da tela que depende dele mostra um aviso. O resto continua funcionando.
-- Toda requisição tem limite de 10 segundos. Em gravações (POST, PATCH, DELETE), o aviso de tempo esgotado diz para conferir antes de tentar de novo, porque o backend pode ter gravado mesmo assim. Nota não pode ser editada nem excluída, então tentar de novo às cegas pode duplicar a nota.
+- Toda requisição tem limite de 15 segundos. Em gravações (POST, PATCH, DELETE), o aviso de tempo esgotado diz para conferir antes de tentar de novo, porque o backend pode ter gravado mesmo assim. Nota não pode ser editada nem excluída, então tentar de novo às cegas pode duplicar a nota.
 - O contador de notificações no menu atualiza a cada 30 segundos. Se o serviço de notificações estiver fora, o contador apenas some.
-- Enquanto o `comunicacao-service` não existir, a página de notificações mostra "Serviço indisponível".
+- Se o `comunicacao-service` estiver parado ou não tiver sido iniciado (ele só sobe com `--profile comunicacao`), a página de notificações mostra "Serviço de notificações indisponível no momento" e o contador some.
 
 ## Estrutura de pastas
 

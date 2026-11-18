@@ -91,25 +91,21 @@ export function registrarFrequencia(dados) {
   return requisicao('/frequencias', { metodo: 'POST', corpo: dados });
 }
 
-// TEMPORARY: local-only fake notifications to test the screen before the comunicacao-service exists.
-// The file notificacoesFalsas.js is NOT in the repository (listed in .git/info/exclude), so on any other
-// machine this glob finds nothing and the real API is always used. Remove this block once the service is up.
-const modulosFalsos = import.meta.glob('./notificacoesFalsas.js', { eager: true });
-const notificacoesFalsas =
-  import.meta.env.VITE_NOTIFICACOES_FALSAS === 'true' ? modulosFalsos['./notificacoesFalsas.js'] : undefined;
+// 404: gateway without the route; 502/503/504: comunicacao-service stopped or not started
+// (it only runs with "docker compose --profile comunicacao"). All mean the same to the user.
+const STATUS_SERVICO_FORA = [404, 502, 503, 504];
 
 export async function listarNotificacoes() {
-  if (notificacoesFalsas) return notificacoesFalsas.listar();
   try {
     return await requisicao('/notificacoes');
   } catch (erro) {
-    // A 404 on the list means the gateway has no route for it yet (comunicacao-service not deployed)
-    if (erro.status === 404) throw new ErroApi(503, 'Serviço de notificações indisponível no momento');
+    if (STATUS_SERVICO_FORA.includes(erro.status)) {
+      throw new ErroApi(503, 'Serviço de notificações indisponível no momento');
+    }
     throw erro;
   }
 }
 
 export function marcarNotificacaoComoLida(id) {
-  if (notificacoesFalsas) return notificacoesFalsas.marcarComoLida(id);
   return requisicao(`/notificacoes/${id}/lida`, { metodo: 'PATCH' });
 }
