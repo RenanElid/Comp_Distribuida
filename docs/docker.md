@@ -1,4 +1,4 @@
-# Docker (semanas 3-4)
+# Docker
 
 O `compose.yaml` sobe o sistema inteiro:
 
@@ -8,6 +8,7 @@ O `compose.yaml` sobe o sistema inteiro:
 | `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
 | `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
+| `db-comunicacao`, `flyway-comunicacao` | Banco e migrations de notificações, no perfil `comunicacao` |
 | `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
 
 ## Iniciar
@@ -26,10 +27,28 @@ A ordem de subida é automática:
 
 1. cada banco sobe e fica `healthy`;
 2. o Flyway daquele banco roda as migrations de `sql/<serviço>/` e termina;
-3. só então o serviço sobe;
+3. cada serviço sobe quando o Flyway dele termina;
 4. o gateway sobe quando os 4 serviços estão `healthy`.
 
 O Flyway roda de novo a cada `docker compose up`. Quando não há migration nova, ele só confere e termina (`Schema "public" is up to date`).
+
+O Kafka sobe em paralelo. Seu health check valida a conexão em `kafka:19092`. Para iniciar a API sem o broker, use `docker compose up -d --build gateway` com o Kafka parado. Para retomar a publicação de eventos, rode `docker compose up -d --wait kafka`.
+
+O `/health` de cada serviço verifica o próprio banco. O `/health` do gateway verifica o Nginx. Assim, uma falha no administrativo pode ser demonstrada sem tirar o gateway do ar.
+
+## Demo de falha e recuperação
+
+O gateway dá ao backend 2 segundos para conectar e, após a conexão, até 10 segundos entre envios e 25 segundos entre leituras. O prazo de leitura deixa o acadêmico concluir as consultas com retry.
+
+Com a stack local rodando e os dados de seed disponíveis, use PowerShell 7.4 ou superior:
+
+```powershell
+pwsh -File ./scripts/demo-resiliencia.ps1
+```
+
+O script tenta matricular o aluno `1` em uma turma inexistente. Espera `404` antes da falha, para apenas o administrativo e espera `503` do acadêmico via gateway. Em seguida, religa o administrativo e espera o `404` voltar. A turma inexistente evita gravar uma matrícula durante a demo.
+
+Para mostrar o circuito abrindo, suba apenas uma réplica do acadêmico e rode o script com `-PedidosDuranteFalha 6`. A sexta resposta deve ser mais rápida porque o acadêmico já abriu o circuito após cinco falhas. Consulte `docker compose logs academico-service` para mostrar a abertura e o fechamento do circuito.
 
 ## Bancos
 
@@ -39,8 +58,9 @@ O Flyway roda de novo a cada `docker compose up`. Quando não há migration nova
 | `administrativo_db` | `db-administrativo` | administrativo-service |
 | `alunos_db` | `db-alunos` | alunos-service |
 | `academico_db` | `db-academico` | academico-service |
+| `comunicacao_db` | `db-comunicacao` | comunicacao-service (em desenvolvimento) |
 
-Os 4 bancos **não** publicam porta no computador: só o serviço e o Flyway acessam, pela rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados no seu volume (`user_db_data`, `administrativo_db_data`, `alunos_db_data` e `academico_db_data`).
+Os bancos ficam na rede do Compose, na porta 5432. Usuário e senha vêm do `POSTGRES_USER` e do `POSTGRES_PASSWORD` do `.env` da raiz. Cada banco guarda os dados em seu próprio volume.
 
 Para consultar um banco pelo terminal:
 
@@ -55,6 +75,18 @@ docker compose logs flyway-academico
 ```
 
 Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`. As migrations ficam em `sql/`; a ordem e os dados de teste estão em [sql/README.md](../sql/README.md).
+
+### Banco de notificações
+
+Com as migrations de `sql/comunicacao-service/` no checkout, inicie o banco e aplique o SQL:
+
+```bash
+docker compose up -d flyway-comunicacao
+docker compose --profile comunicacao wait flyway-comunicacao
+docker compose --profile comunicacao ps -a db-comunicacao flyway-comunicacao
+```
+
+O `db-comunicacao` fica `healthy` e o `flyway-comunicacao` termina com `Exited (0)`. O perfil `comunicacao` permite validar o banco separadamente enquanto o serviço de notificações está em desenvolvimento.
 
 ## Portas no computador
 
