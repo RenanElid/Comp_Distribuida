@@ -237,6 +237,23 @@ services:
       flyway-alunos:
         condition: service_completed_successfully
 
+  comunicacao-service:
+    profiles: [comunicacao]
+    build: ./services/comunicacao-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8007:8005"
+    env_file: ./services/comunicacao-service/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      flyway-comunicacao:
+        condition: service_completed_successfully
+
   academico-service:
     build: ./services/academico-service
     restart: unless-stopped
