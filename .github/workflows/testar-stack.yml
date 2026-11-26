@@ -1,0 +1,87 @@
+name: Testar a stack Docker
+
+on:
+  workflow_call:
+    inputs:
+      publicar:
+        type: boolean
+        default: false
+
+jobs:
+  integracao:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      COMPOSE_PROJECT_NAME: distrischool-ci
+      GRAFANA_ADMIN_PASSWORD: senha-local-da-ci
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Subir o Compose a partir do checkout limpo
+        run: |
+          docker compose config --quiet
+          docker compose up --build --detach --wait --wait-timeout 300
+
+      - name: Verificar frontend e recuperação de senha via Mailpit
+        run: |
+          curl -fsS http://localhost:3000/ | grep -F '<title>DistriSchool</title>'
+          email=carla.tecnica@distrischool.test
+          curl -fsS --json "{\"email\":\"$email\"}" http://localhost:8080/api/auth/recuperar-senha > /dev/null
+          curl -fsS http://localhost:8025/api/v1/messages |
+            jq -e --arg email "$email" 'any(.messages[];
+              .Subject == "DistriSchool - Recuperação de senha" and any(.To[]; .Address == $email))'
+
+      - name: Verificar o painel do Grafana e os oito serviços monitorados
+        run: |
+          curl -fsS --retry 8 --retry-delay 2 --retry-all-errors --user "admin:$GRAFANA_ADMIN_PASSWORD" \
+            http://localhost:3001/api/dashboards/uid/distrischool-http |
+            jq -e '.dashboard.uid == "distrischool-http"'
+          for tentativa in {1..24}; do
+            if curl -fsSG http://localhost:9090/api/v1/query \
+              --data-urlencode 'query=count(probe_success{job="distrischool-http"} == 1)' |
+              jq -e '.data.result[0].value[1] == "8"'; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::O Prometheus não confirmou os oito serviços disponíveis."
+          exit 1
+
+      - name: Medir o p95 das rotas pelo gateway
+        run: |
+          echo '### Teste de carga' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/teste_carga.py | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar as imagens testadas no GitHub Container Registry
+        if: inputs.publicar && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          servicos=$(docker compose config --format json | jq -r '.services | to_entries[] | select(.value.build) | .key')
+          for servico in $servicos; do
+            container=$(docker compose ps --quiet "$servico")
+            imagem=$(docker inspect --format '{{.Image}}' "$container")
+            destino="ghcr.io/${GITHUB_REPOSITORY,,}/$servico:sha-$GITHUB_SHA"
+            docker tag "$imagem" "$destino"
+            docker push "$destino"
+            echo "- \`$destino\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Diagnosticar falhas
+        if: failure()
+        run: |
+          docker compose ps --all
+          docker compose logs --no-color --tail=30
+
+      - name: Encerrar ambiente de CI
+        if: always()
+        run: docker compose down --volumes --remove-orphans
