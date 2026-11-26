@@ -194,8 +194,7 @@ export function resumoNotasDaTurma(turma_id) {
   return requisicao('/notas/resumo', { params: { turma_id } });
 }
 
-// 404: gateway without the route; 502/503/504: comunicacao-service stopped or not started
-// (it only runs with "docker compose --profile comunicacao"). All mean the same to the user.
+// Gateway errors shown as an unavailable notification service.
 const STATUS_SERVICO_FORA = [404, 502, 503, 504];
 
 export async function listarNotificacoes() {

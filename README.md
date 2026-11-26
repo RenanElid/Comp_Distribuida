@@ -6,7 +6,7 @@ Trabalho da cadeira de computação distribuída pela Universidade de Fortaleza,
 
 Sistema de gestão escolar dividido em serviços independentes:
 
-- **4 serviços** em Python + FastAPI: `user-service` (login e usuários), `administrativo-service` (professores, técnicos, disciplinas e turmas), `alunos-service` (cadastro de alunos) e `academico-service` (matrículas, notas e frequência).
+- **5 serviços** em Python + FastAPI: `user-service` (login e usuários), `administrativo-service` (professores, técnicos, disciplinas e turmas), `alunos-service` (cadastro de alunos), `academico-service` (matrículas, notas e frequência) e `comunicacao-service` (notificações).
 - **Um banco PostgreSQL por serviço**, cada um no seu container. Nenhum serviço lê o banco de outro.
 - **API Gateway (Nginx)** na porta 8080: é a única porta que o frontend usa. Ele repassa `/api/...` para o serviço certo e cuida do CORS.
 - **Kafka** para os eventos entre os serviços. Por exemplo, quando um aluno é excluído, o acadêmico recebe o evento e apaga as matrículas dele.
@@ -22,45 +22,20 @@ Mais detalhes:
 
 ## Como subir do zero
 
-Precisa do Docker (Docker Desktop ou OrbStack) aberto. Todos os comandos são rodados na raiz do repositório.
-
-**1. Criar os arquivos `.env`** (um na raiz, para a infraestrutura, e um em cada serviço):
+Com o Docker aberto e Docker Compose 2.24 ou superior, execute na raiz de um checkout limpo:
 
 ```bash
-cp .env.example .env
-for servico in user administrativo alunos academico comunicacao; do
-  cp services/$servico-service/.env.example services/$servico-service/.env
-done
-```
-
-**2. Trocar a senha do banco e a chave do JWT.** A senha tem que ser a mesma no `.env` da raiz e nos 5 serviços, e a chave do JWT tem que ser **igual nos 5 serviços** (se o comunicacao-service tiver uma chave diferente, o login funciona mas a página de notificações devolve 401). Os comandos abaixo fazem isso de uma vez (use uma senha sem `/`, `@` e `:`):
-
-```bash
-SENHA=minha-senha-local
-CHAVE=$(python3 -c "import secrets; print(secrets.token_urlsafe(40))")
-sed -i '' "s/troque-esta-senha-local/$SENHA/" .env services/*/.env
-sed -i '' "s/troque-por-uma-chave-com-pelo-menos-32-caracteres/$CHAVE/" services/*/.env
-```
-
-O `sed -i ''` é a sintaxe do macOS. No Linux e no Git Bash do Windows, use `sed -i` sem o `''`.
-
-**3. Subir tudo:**
-
-```bash
-docker compose --profile comunicacao up -d --build
-```
-
-O `--profile comunicacao` sobe também o serviço de notificações (comunicacao-service, banco e Flyway). Sem ele, o resto do sistema funciona e a página de notificações mostra "indisponível".
-
-**4. Conferir:**
-
-```bash
+docker compose up -d
 docker compose ps -a
 ```
 
+Abra o sistema em http://localhost:3000. O Compose inicia a comunicação, o Mailpit e o monitoramento junto com a aplicação. Depois de alterar o código, use `docker compose up -d --build` para reconstruir as imagens.
+
+Os valores padrão atendem à demonstração local. Para personalizar as credenciais antes da primeira subida, copie `.env.example` para `.env` na raiz e ajuste `POSTGRES_PASSWORD`, `JWT_SECRET` e `GRAFANA_ADMIN_PASSWORD`. Use uma senha de banco segura para URLs (por exemplo, letras, números, hífen e sublinhado). Configurações existentes em `services/<serviço>/.env` têm precedência sobre os modelos dos serviços. Mantenha a senha do banco e a chave JWT consistentes entre eles ao reutilizar uma instalação.
+
 O gateway, o frontend, os 5 serviços, os 5 bancos e o Kafka devem aparecer como `healthy`. Os 5 `flyway-...` aparecem como `Exited (0)`: eles criam as tabelas e terminam.
 
-**5. Fazer login pelo gateway** com um usuário de teste do seed:
+**Login pelo gateway** com um usuário de teste do seed:
 
 ```bash
 curl -s -X POST http://localhost:8080/api/auth/login \
@@ -80,6 +55,18 @@ curl -s http://localhost:8080/api/alunos -H "Authorization: Bearer $TOKEN"
 ```
 
 Todos os usuários do seed usam a senha `Senha@123` (a lista está em [sql/README.md](sql/README.md)).
+
+## Demonstrar a infraestrutura
+
+1. No frontend, use **Esqueci minha senha** com `carla.tecnica@distrischool.test`. Abra a [caixa do Mailpit](http://localhost:8025) para conferir a mensagem que chegou por SMTP.
+2. Abra o [painel do Grafana](http://localhost:3001/d/distrischool-http). Na primeira execução com os valores padrão, entre com `admin` e `distrischool-demo`. O painel mostra disponibilidade e tempo de resposta das cinco APIs, do gateway, do frontend e do Mailpit. O [Prometheus](http://localhost:9090) coleta uma medição a cada 15 segundos.
+3. Na raiz, execute `python scripts/teste_carga.py` (ou `python3`). O teste faz login uma vez e envia 200 consultas pelo gateway com até oito requisições simultâneas. Ele exibe o p95, o máximo e os códigos HTTP de cada rota. Para passar, todas as respostas precisam ser HTTP 200 com JSON válido e o p95 de **cada rota** precisa ficar abaixo de dois segundos.
+
+## Integração e entrega contínuas
+
+Em cada pull request, o GitHub Actions constrói a aplicação, sobe o Compose e verifica o frontend, a recuperação de senha por e-mail, o monitoramento e a carga. A tabela de tempos fica no resumo da execução. Após integrar na `main`, o fluxo repete os testes e publica as seis imagens da aplicação no GitHub Container Registry com a tag `sha-<commit>`.
+
+Para os próximos commits, a proposta para a equipe é usar `feat:` para funcionalidades, `fix:` para correções e `docs:` para documentação.
 
 ## Rodar com 3 cópias do acadêmico
 

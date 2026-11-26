@@ -1,3 +1,6 @@
+include:
+  - compose.monitoramento.yaml
+
 services:
   kafka:
     image: apache/kafka:4.3.2
@@ -38,7 +41,7 @@ services:
     environment:
       POSTGRES_DB: user_db
       POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
     volumes:
       - user_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -54,7 +57,7 @@ services:
     environment:
       POSTGRES_DB: administrativo_db
       POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
     volumes:
       - administrativo_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -70,7 +73,7 @@ services:
     environment:
       POSTGRES_DB: alunos_db
       POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
     volumes:
       - alunos_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -86,7 +89,7 @@ services:
     environment:
       POSTGRES_DB: academico_db
       POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
     volumes:
       - academico_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -97,13 +100,12 @@ services:
       start_period: 10s
 
   db-comunicacao:
-    profiles: [comunicacao]
     image: postgres:17
     restart: unless-stopped
     environment:
       POSTGRES_DB: comunicacao_db
       POSTGRES_USER: ${POSTGRES_USER:-distrischool}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
     volumes:
       - comunicacao_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -119,7 +121,7 @@ services:
     environment:
       FLYWAY_URL: jdbc:postgresql://db-user:5432/user_db
       FLYWAY_USER: ${POSTGRES_USER:-distrischool}
-      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     volumes:
       - ./sql/user-service:/flyway/sql:ro
@@ -133,7 +135,7 @@ services:
     environment:
       FLYWAY_URL: jdbc:postgresql://db-administrativo:5432/administrativo_db
       FLYWAY_USER: ${POSTGRES_USER:-distrischool}
-      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     volumes:
       - ./sql/administrativo-service:/flyway/sql:ro
@@ -147,7 +149,7 @@ services:
     environment:
       FLYWAY_URL: jdbc:postgresql://db-alunos:5432/alunos_db
       FLYWAY_USER: ${POSTGRES_USER:-distrischool}
-      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     volumes:
       - ./sql/alunos-service:/flyway/sql:ro
@@ -161,7 +163,7 @@ services:
     environment:
       FLYWAY_URL: jdbc:postgresql://db-academico:5432/academico_db
       FLYWAY_USER: ${POSTGRES_USER:-distrischool}
-      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     volumes:
       - ./sql/academico-service:/flyway/sql:ro
@@ -170,13 +172,12 @@ services:
         condition: service_healthy
 
   flyway-comunicacao:
-    profiles: [comunicacao]
     image: flyway/flyway:11.20.0
     command: migrate
     environment:
       FLYWAY_URL: jdbc:postgresql://db-comunicacao:5432/comunicacao_db
       FLYWAY_USER: ${POSTGRES_USER:-distrischool}
-      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha-local}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
     volumes:
       - type: bind
@@ -194,7 +195,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8001:8001"
-    env_file: ./services/user-service/.env
+    env_file:
+      - ./services/user-service/.env.example
+      - path: ./services/user-service/.env
+        required: false
     # Overrides the .env: password recovery and email verification go to the Mailpit test inbox
     environment:
       SMTP_HOST: ${SMTP_HOST:-mailpit}
@@ -214,7 +218,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8002:8002"
-    env_file: ./services/administrativo-service/.env
+    env_file:
+      - ./services/administrativo-service/.env.example
+      - path: ./services/administrativo-service/.env
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3)"]
       interval: 10s
@@ -230,7 +237,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8003:8003"
-    env_file: ./services/alunos-service/.env
+    env_file:
+      - ./services/alunos-service/.env.example
+      - path: ./services/alunos-service/.env
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health', timeout=3)"]
       interval: 10s
@@ -242,12 +252,14 @@ services:
         condition: service_completed_successfully
 
   comunicacao-service:
-    profiles: [comunicacao]
     build: ./services/comunicacao-service
     restart: unless-stopped
     ports:
       - "127.0.0.1:8007:8005"
-    env_file: ./services/comunicacao-service/.env
+    env_file:
+      - ./services/comunicacao-service/.env.example
+      - path: ./services/comunicacao-service/.env
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health', timeout=3)"]
       interval: 10s
@@ -263,7 +275,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8004-8006:8004"
-    env_file: ./services/academico-service/.env
+    env_file:
+      - ./services/academico-service/.env.example
+      - path: ./services/academico-service/.env
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8004/health', timeout=3)"]
       interval: 10s

@@ -1,0 +1,68 @@
+{
+  "uid": "distrischool-http",
+  "title": "DistriSchool · Saúde dos serviços",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Disponibilidade atual",
+      "description": "Uma sonda HTTP consulta cada serviço a cada 15 segundos.",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "distrischool-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{job=\"distrischool-http\"} or ((up{job=\"distrischool-http\"} == 0) - 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": { "text": "Sem medição", "color": "orange" },
+                "0": { "text": "Indisponível", "color": "red" },
+                "1": { "text": "Disponível", "color": "green" }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Tempo de resposta das sondas HTTP",
+      "description": "Duração das verificações concluídas com sucesso, incluindo resolução de nome, conexão e resposta HTTP.",
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 10 },
+      "datasource": { "type": "prometheus", "uid": "distrischool-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(1000 * probe_duration_seconds{job=\"distrischool-http\"}) and (probe_success{job=\"distrischool-http\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "min": 0 },
+        "overrides": []
+      }
+    }
+  ]
+}
