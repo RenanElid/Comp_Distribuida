@@ -11,6 +11,11 @@ export function podeEditarAlunos(perfil) {
   return perfil === 'ADMIN';
 }
 
+// Teachers, classes, subjects and assignments: only ADMIN changes them (TEACHER only reads)
+export function podeEditarCadastros(perfil) {
+  return perfil === 'ADMIN';
+}
+
 export function podeGerenciarMatriculas(perfil) {
   return perfil === 'ADMIN' || perfil === 'TEACHER';
 }

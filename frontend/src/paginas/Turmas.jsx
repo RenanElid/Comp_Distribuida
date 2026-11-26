@@ -5,6 +5,7 @@ import {
   LinearProgress,
   Link as LinkMui,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -14,12 +15,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { listarTurmas } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
+import TurmaDialog from '../componentes/TurmaDialog';
+import { useAuth } from '../contexto/AuthContext';
 import useCarregamento from '../hooks/useCarregamento';
-
-export const NOMES_TURNO = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite' };
+import { podeEditarCadastros } from '../utils/permissoes';
+import { NOMES_TURNO } from '../utils/formatos';
 
 // estadoDoLink carries the year filter so the detail page can come back to it
 function LinhaTurma({ turma, estadoDoLink }) {
@@ -39,6 +42,10 @@ function LinhaTurma({ turma, estadoDoLink }) {
 export default function Turmas() {
   const [searchParams, setSearchParams] = useSearchParams();
   const estadoDoLink = { voltarPara: useLocation().search };
+  const { usuario } = useAuth();
+  const podeEditar = podeEditarCadastros(usuario.perfil);
+  const navegar = useNavigate();
+  const [criando, setCriando] = useState(false);
   // Only digits reach the API; anything else in the URL is treated as "all years"
   const parametroAno = searchParams.get('ano_letivo') ?? '';
   const anoLetivo = /^\d+$/.test(parametroAno) ? parametroAno : '';
@@ -62,9 +69,14 @@ export default function Turmas() {
 
   return (
     <>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Turmas
-      </Typography>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5">Turmas</Typography>
+        {podeEditar && (
+          <Button variant="contained" onClick={() => setCriando(true)}>
+            + Nova turma
+          </Button>
+        )}
+      </Stack>
 
       <Box component="form" onSubmit={buscar} sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
         <TextField
@@ -109,6 +121,13 @@ export default function Turmas() {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* After creating, go straight to the new class to assign teachers and enroll students */}
+      <TurmaDialog
+        aberto={criando}
+        aoFechar={() => setCriando(false)}
+        aoSalvar={(turma) => navegar(`/turmas/${turma.id}`, { state: estadoDoLink })}
+      />
     </>
   );
 }

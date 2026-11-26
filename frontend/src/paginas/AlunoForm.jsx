@@ -115,8 +115,8 @@ export default function AlunoForm() {
 
   function montarCorpo() {
     const texto = (campo) => valores[campo].trim();
-    // PUT ignores null (exclude_none), so "" is the only way to clear a field when editing
-    const opcional = (campo) => texto(campo) || (editando ? '' : null);
+    // The PUT only changes the fields it receives, and null clears an optional one
+    const opcional = (campo) => texto(campo) || null;
     const corpo = {
       matricula: texto('matricula'),
       nome: texto('nome'),
@@ -125,10 +125,9 @@ export default function AlunoForm() {
       endereco: opcional('endereco'),
       contato: opcional('contato'),
     };
-    // Sent only when chosen: the PUT ignores null (exclude_none), so an existing link cannot be removed yet
-    if (valores.responsavel_usuario_id !== '') {
-      corpo.responsavel_usuario_id = Number(valores.responsavel_usuario_id);
-    }
+    // "Sem responsável" sends null, which removes an existing link
+    corpo.responsavel_usuario_id =
+      valores.responsavel_usuario_id === '' ? null : Number(valores.responsavel_usuario_id);
     if (!editando) {
       corpo.email = texto('email');
       corpo.senha = valores.senha; // never trim a password
@@ -270,8 +269,7 @@ export default function AlunoForm() {
                   : 'Usuário com perfil Responsável que recebe as notificações de notas e frequência')
               }
             >
-              {/* Removing an existing link is not supported by the backend yet (PUT ignores null) */}
-              <MenuItem value="" disabled={editando && responsavelOriginal != null}>
+              <MenuItem value="">
                 Sem responsável
               </MenuItem>
               {responsaveis.lista.map((responsavel) => (

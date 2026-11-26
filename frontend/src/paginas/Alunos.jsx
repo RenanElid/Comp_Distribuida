@@ -16,13 +16,22 @@ import {
   Typography,
 } from '@mui/material';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
-import { listarAlunos } from '../api/endpoints';
+import { listarAlunos, listarTodosAlunos } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
+import BotoesExportar from '../componentes/BotoesExportar';
 import { useAuth } from '../contexto/AuthContext';
 import { formatarData } from '../utils/formatos';
 import { podeEditarAlunos } from '../utils/permissoes';
 
 const TAMANHOS = [5, 10, 20, 50];
+
+const COLUNAS_EXPORTACAO = [
+  { titulo: 'Matrícula', valor: (aluno) => aluno.matricula },
+  { titulo: 'Nome', valor: (aluno) => aluno.nome },
+  { titulo: 'Nascimento', valor: (aluno) => formatarData(aluno.data_nascimento) },
+  { titulo: 'Endereço', valor: (aluno) => aluno.endereco },
+  { titulo: 'Contato', valor: (aluno) => aluno.contato },
+];
 
 // Filters and page live in the URL, so F5 and the back button keep the state
 function lerParametros(searchParams) {
@@ -52,6 +61,7 @@ export default function Alunos() {
   const [resultado, setResultado] = useState({ itens: [], total: 0 });
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const [erroExportacao, setErroExportacao] = useState(null);
 
   // Keep the fields in sync when the URL changes from outside (back button)
   useEffect(() => {
@@ -135,9 +145,20 @@ export default function Alunos() {
           Buscar
         </Button>
         <Button onClick={limpar}>Limpar</Button>
+        <Box sx={{ flexGrow: 1 }} />
+        {/* Exports every page of the current search, not only the page on screen */}
+        <BotoesExportar
+          nomeArquivo="alunos"
+          titulo={nome || matricula ? `Alunos (filtro: ${[nome, matricula].filter(Boolean).join(', ')})` : 'Alunos'}
+          colunas={COLUNAS_EXPORTACAO}
+          carregarLinhas={() => listarTodosAlunos({ nome, matricula })}
+          aoErro={setErroExportacao}
+          paisagem
+        />
       </Box>
 
       <AlertaErro erro={erro} />
+      <AlertaErro erro={erroExportacao} />
 
       <Paper>
         {/* Fixed-height slot so the table does not jump while loading */}

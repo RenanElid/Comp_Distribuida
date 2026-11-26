@@ -5,6 +5,8 @@ export function formatarData(dataIso) {
   return `${dia}/${mes}/${ano}`;
 }
 
+export const NOMES_TURNO = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite' };
+
 // 8.5 -> "8,5"
 export function formatarNumero(valor) {
   return valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 });

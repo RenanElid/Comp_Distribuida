@@ -24,19 +24,29 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   buscarTurma,
   cancelarMatricula,
+  excluirTurma,
   listarMatriculas,
   listarTodosAlunos,
   matricularAluno,
 } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
+import AtribuicoesDaTurma from '../componentes/AtribuicoesDaTurma';
+import BotoesExportar from '../componentes/BotoesExportar';
+import TurmaDialog from '../componentes/TurmaDialog';
 import { useAuth } from '../contexto/AuthContext';
 import useCarregamento from '../hooks/useCarregamento';
-import { podeGerenciarMatriculas } from '../utils/permissoes';
-import { NOMES_TURNO } from './Turmas';
+import { podeEditarCadastros, podeGerenciarMatriculas } from '../utils/permissoes';
+import { NOMES_TURNO } from '../utils/formatos';
+
+const COLUNAS_EXPORTACAO = [
+  { titulo: 'Matrícula', valor: (linha) => linha.aluno?.matricula ?? '-' },
+  { titulo: 'Nome', valor: (linha) => linha.aluno?.nome ?? `Aluno #${linha.matricula.aluno_id}` },
+  { titulo: 'Contato', valor: (linha) => linha.aluno?.contato },
+];
 
 function descreverAluno(aluno) {
   return `${aluno.nome} (${aluno.matricula})`;
@@ -73,6 +83,8 @@ export default function TurmaDetalhe() {
   const voltarPara = '/turmas' + (local.state?.voltarPara ?? '');
   const { usuario } = useAuth();
   const podeGerenciar = podeGerenciarMatriculas(usuario.perfil);
+  const podeEditarTurma = podeEditarCadastros(usuario.perfil);
+  const navegar = useNavigate();
 
   // Three independent loads: if one service is down, the others still show up
   const turma = useCarregamento(() => buscarTurma(id), [id]);
@@ -84,6 +96,9 @@ export default function TurmaDetalhe() {
   const [linhaACancelar, setLinhaACancelar] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [erroDialog, setErroDialog] = useState(null);
+  const [editandoTurma, setEditandoTurma] = useState(false);
+  const [excluindoTurma, setExcluindoTurma] = useState(false);
+  const [erroExportacao, setErroExportacao] = useState(null);
 
   const alunosPorId = useMemo(() => new Map((alunos.dados ?? []).map((a) => [a.id, a])), [alunos.dados]);
 
@@ -145,6 +160,18 @@ export default function TurmaDetalhe() {
     }
   }
 
+  async function confirmarExclusaoTurma() {
+    setEnviando(true);
+    setErroDialog(null);
+    try {
+      await excluirTurma(id);
+      navegar(voltarPara, { replace: true });
+    } catch (erro) {
+      setErroDialog(erro);
+      setEnviando(false);
+    }
+  }
+
   const botaoVoltar = (
     <Button component={Link} to={voltarPara} sx={{ mb: 2 }}>
       ← Voltar para turmas
@@ -181,9 +208,25 @@ export default function TurmaDetalhe() {
       {botaoVoltar}
 
       {turma.dados ? (
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          {turma.dados.nome} · {turma.dados.ano_letivo} · {NOMES_TURNO[turma.dados.turno] ?? turma.dados.turno}
-        </Typography>
+        <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          <Typography variant="h5" sx={{ flexGrow: 1 }}>
+            {turma.dados.nome} · {turma.dados.ano_letivo} · {NOMES_TURNO[turma.dados.turno] ?? turma.dados.turno}
+          </Typography>
+          {podeEditarTurma && (
+            <>
+              <Button onClick={() => setEditandoTurma(true)}>Editar turma</Button>
+              <Button
+                color="error"
+                onClick={() => {
+                  setErroDialog(null);
+                  setExcluindoTurma(true);
+                }}
+              >
+                Excluir turma
+              </Button>
+            </>
+          )}
+        </Stack>
       ) : (
         <>
           <Typography variant="h5" sx={{ mb: 1 }}>
@@ -199,10 +242,23 @@ export default function TurmaDetalhe() {
         </Alert>
       )}
 
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="h6">
+      <AtribuicoesDaTurma turmaId={id} podeEditar={podeEditarTurma} />
+
+      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Alunos matriculados{matriculas.dados ? ` (${matriculas.dados.length})` : ''}
         </Typography>
+        <BotoesExportar
+          nomeArquivo={`alunos-turma-${id}`}
+          titulo={
+            turma.dados
+              ? `Alunos de ${turma.dados.nome} · ${turma.dados.ano_letivo} · ${NOMES_TURNO[turma.dados.turno] ?? ''}`
+              : `Alunos da turma #${id}`
+          }
+          colunas={COLUNAS_EXPORTACAO}
+          carregarLinhas={async () => linhas}
+          aoErro={setErroExportacao}
+        />
         {podeGerenciar && (
           // Disabled buttons do not fire mouse events, so the tooltip needs the span around it
           <Tooltip title={motivoSemMatricula ?? ''}>
@@ -216,6 +272,7 @@ export default function TurmaDetalhe() {
       </Stack>
 
       <AlertaErro erro={matriculas.erro} />
+      <AlertaErro erro={erroExportacao} />
 
       <Paper>
         <Box sx={{ height: 4 }}>{(matriculas.carregando || alunos.carregando) && <LinearProgress />}</Box>
@@ -278,6 +335,35 @@ export default function TurmaDetalhe() {
           </Button>
           <Button variant="contained" onClick={confirmarMatricula} disabled={!alunoEscolhido || enviando}>
             {enviando ? 'Matriculando...' : 'Matricular'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <TurmaDialog
+        aberto={editandoTurma}
+        turma={turma.dados}
+        aoFechar={() => setEditandoTurma(false)}
+        aoSalvar={() => {
+          setEditandoTurma(false);
+          turma.recarregar();
+        }}
+      />
+
+      <Dialog open={excluindoTurma} onClose={() => !enviando && setExcluindoTurma(false)}>
+        <DialogTitle>Excluir a turma {turma.dados?.nome}?</DialogTitle>
+        <DialogContent>
+          <AlertaErro erro={erroDialog} />
+          <DialogContentText>
+            A turma e as atribuições de professores serão apagadas. As matrículas, notas e frequências dos alunos
+            desta turma também são apagadas, pelo evento class.deleted no Kafka. Essa ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExcluindoTurma(false)} disabled={enviando}>
+            Voltar
+          </Button>
+          <Button color="error" variant="contained" onClick={confirmarExclusaoTurma} disabled={enviando}>
+            {enviando ? 'Excluindo...' : 'Excluir turma'}
           </Button>
         </DialogActions>
       </Dialog>
