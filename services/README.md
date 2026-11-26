@@ -160,9 +160,9 @@ Retry e circuit breaker nas chamadas HTTP ficam para a etapa das semanas 5 e 6. 
 
 ## Variáveis de ambiente
 
-Cada serviço tem o seu `services/<serviço>/.env`, que o `compose.yaml` carrega (`env_file`). O modelo é o `.env.example` da mesma pasta. Os endereços usam o nome do container (`db-alunos`, `kafka`, `user-service`...), não `localhost`.
+O Compose carrega o `.env.example` de cada serviço e aplica as configurações de `services/<serviço>/.env` quando esse arquivo existe. Os modelos leem as credenciais do ambiente do Compose, com valores padrão para a demonstração local. Os endereços usam o nome do container (`db-alunos`, `kafka`, `user-service`...), não `localhost`.
 
-O `JWT_SECRET` tem que ser **igual nos 4 serviços**. A senha dentro do `DATABASE_URL` é a mesma do `POSTGRES_PASSWORD` do `.env` da raiz.
+O `JWT_SECRET` tem que ser **igual nos 5 serviços**. A senha dentro do `DATABASE_URL` é a mesma do `POSTGRES_PASSWORD` do `.env` da raiz.
 
 **user-service**
 

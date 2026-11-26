@@ -9,13 +9,13 @@ O `compose.yaml` sobe o sistema inteiro:
 | `user-service`, `administrativo-service`, `alunos-service`, `academico-service` | Os 4 serviços (portas 8001 a 8004, para o Swagger) |
 | `db-user`, `db-administrativo`, `db-alunos`, `db-academico` | Um PostgreSQL 17 por serviço |
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
-| `comunicacao-service`, `db-comunicacao`, `flyway-comunicacao` | Serviço de notificações (porta 8007, para o Swagger), banco e migrations, no perfil `comunicacao` |
+| `comunicacao-service`, `db-comunicacao`, `flyway-comunicacao` | Serviço de notificações (porta 8007, para o Swagger), banco e migrations |
 | `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
 | `mailpit` | Caixa de email de teste, porta 8025 (http://localhost:8025). Recebe os emails de recuperação de senha e de verificação que o user-service envia |
 
 ## Iniciar
 
-O passo a passo completo (criar os `.env`, trocar a senha e a chave do JWT) está no [README.md da raiz](../README.md). Na raiz do repositório, com o Docker ativo:
+O passo a passo para a primeira execução e a configuração opcional das credenciais está no [README.md da raiz](../README.md). Na raiz do repositório, com o Docker ativo:
 
 ```bash
 docker compose config --quiet
@@ -23,7 +23,7 @@ docker compose up -d --build
 docker compose ps -a
 ```
 
-Espere todos ficarem `healthy`. Os 4 `flyway-...` terminam com `Exited (0)`.
+Aguarde os bancos e as APIs ficarem `healthy`. Os cinco `flyway-...` terminam com `Exited (0)`.
 
 A ordem de subida é automática:
 
@@ -80,13 +80,21 @@ Se alterar `POSTGRES_USER`, use o novo usuário no comando `psql`. As migrations
 
 ### Serviço de notificações
 
-O `comunicacao-service` e o banco dele ficam no perfil `comunicacao`. Para subir tudo junto:
+O Compose inicia o banco, o Flyway e a API de notificações por padrão. O `flyway-comunicacao` termina com `Exited (0)`. Depois disso, a API atende em `/api/notificacoes` pelo gateway com o token do usuário.
 
-```bash
-docker compose --profile comunicacao up -d --build
-```
+## Resultado do teste de carga
 
-O `flyway-comunicacao` termina com `Exited (0)` e o `comunicacao-service` fica `healthy`. Sem o perfil, o resto do sistema funciona normalmente e a rota `/api/notificacoes` responde 504.
+Em 26/11/2026, a stack local rodou no Docker Desktop com uma réplica por API, bancos novos e dados do seed. O comando `python scripts/teste_carga.py --porta 18080` usou a porta reservada para essa execução. Na configuração padrão, basta executar `python scripts/teste_carga.py`.
+
+| Rota pelo gateway | Leituras HTTP 200 | p95 | Máximo |
+| --- | ---: | ---: | ---: |
+| `/api/auth/me` | 40 | 32,6 ms | 47,2 ms |
+| `/api/alunos` | 40 | 99,8 ms | 139,6 ms |
+| `/api/turmas` | 40 | 52,0 ms | 64,4 ms |
+| `/api/matriculas` | 40 | 38,5 ms | 60,4 ms |
+| `/api/notificacoes` | 40 | 36,5 ms | 48,3 ms |
+
+Com até oito requisições simultâneas, as 200 consultas retornaram JSON válido. O p95 geral foi de **48,3 ms** e a requisição mais lenta levou **139,6 ms**, abaixo da meta de dois segundos. O login ocorreu antes da medição. O resultado representa essa carga e esse conjunto de dados.
 
 ## Portas no computador
 
@@ -95,7 +103,10 @@ O `flyway-comunicacao` termina com `Exited (0)` e o `comunicacao-service` fica `
 | 8080 (`GATEWAY_PORT`) | gateway |
 | 8001, 8002, 8003 | user-service, administrativo-service, alunos-service |
 | 8004 a 8006 | academico-service (uma porta por cópia, com `--scale`) |
-| 8007 | comunicacao-service (perfil `comunicacao`) |
+| 8007 | comunicacao-service |
+| 8025 (`MAILPIT_PORT`) | Mailpit (SMTP interno em `mailpit:1025`) |
+| 9090 (`PROMETHEUS_PORT`) | Prometheus |
+| 3001 (`GRAFANA_PORT`) | Grafana |
 | 9092 (`KAFKA_PORT`) | kafka |
 
 Todas as portas ficam acessíveis apenas no próprio computador (`127.0.0.1`). Os arquivos `.env` são locais e não entram no Git.

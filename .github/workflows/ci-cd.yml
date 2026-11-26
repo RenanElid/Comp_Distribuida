@@ -1,0 +1,23 @@
+name: Integração e entrega
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar-pr:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/testar-stack.yml
+
+  entregar-main:
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/testar-stack.yml
+    with:
+      publicar: true

@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: DistriSchool
+    type: file
+    options:
+      path: /etc/grafana/dashboards
