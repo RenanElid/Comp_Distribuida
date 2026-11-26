@@ -31,6 +31,11 @@ class AtribuicaoService:
         professor = self.professor_repository.buscar_por_id(dados.professor_id)
         if professor is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Professor não encontrado")
+        if dados.disciplina_id not in professor.disciplina_ids:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"{professor.nome} não leciona {disciplina.nome}. Inclua a disciplina no cadastro do professor",
+            )
         if self.atribuicao_repository.buscar_por_turma_e_disciplina(turma_id, dados.disciplina_id):
             raise HTTPException(status.HTTP_409_CONFLICT, "Esta disciplina já tem professor nesta turma")
 

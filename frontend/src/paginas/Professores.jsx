@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { listarProfessores } from '../api/endpoints';
+import { listarDisciplinas, listarProfessores } from '../api/endpoints';
 import AlertaErro from '../componentes/AlertaErro';
 import BotoesExportar from '../componentes/BotoesExportar';
 import { useAuth } from '../contexto/AuthContext';
@@ -23,6 +23,7 @@ import { podeEditarCadastros } from '../utils/permissoes';
 
 const COLUNAS_EXPORTACAO = [
   { titulo: 'Nome', valor: (professor) => professor.nome },
+  { titulo: 'Disciplinas', valor: (professor) => professor.nomesDisciplinas },
   { titulo: 'Qualificação', valor: (professor) => professor.qualificacao },
   { titulo: 'Contato', valor: (professor) => professor.contato },
 ];
@@ -31,8 +32,13 @@ export default function Professores() {
   const { usuario } = useAuth();
   const podeEditar = podeEditarCadastros(usuario.perfil);
   const { dados, carregando, erro } = useCarregamento(listarProfessores, []);
+  const disciplinas = useCarregamento(listarDisciplinas, []);
   const [erroExportacao, setErroExportacao] = useState(null);
-  const professores = dados ?? [];
+  const nomesPorId = new Map((disciplinas.dados ?? []).map((d) => [d.id, d.nome]));
+  const professores = (dados ?? []).map((professor) => ({
+    ...professor,
+    nomesDisciplinas: professor.disciplina_ids.map((id) => nomesPorId.get(id) ?? `#${id}`).join(', ') || '-',
+  }));
 
   return (
     <>
@@ -66,6 +72,7 @@ export default function Professores() {
             <TableHead>
               <TableRow>
                 <TableCell>Nome</TableCell>
+                <TableCell>Disciplinas</TableCell>
                 <TableCell>Qualificação</TableCell>
                 <TableCell>Contato</TableCell>
                 {podeEditar && <TableCell align="right">Ações</TableCell>}
@@ -75,6 +82,7 @@ export default function Professores() {
               {professores.map((professor) => (
                 <TableRow key={professor.id} hover>
                   <TableCell>{professor.nome}</TableCell>
+                  <TableCell>{professor.nomesDisciplinas}</TableCell>
                   <TableCell>{professor.qualificacao || '-'}</TableCell>
                   <TableCell>{professor.contato || '-'}</TableCell>
                   {podeEditar && (
@@ -88,7 +96,7 @@ export default function Professores() {
               ))}
               {!carregando && !erro && professores.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={podeEditar ? 4 : 3} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={podeEditar ? 5 : 4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     Nenhum professor cadastrado
                   </TableCell>
                 </TableRow>

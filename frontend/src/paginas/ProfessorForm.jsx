@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
@@ -106,6 +107,10 @@ export default function ProfessorForm() {
   const [errosCampos, setErrosCampos] = useState({});
   const [erroGeral, setErroGeral] = useState(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  // Subjects the teacher can teach: the class assignment only offers teachers of the chosen subject
+  const [disciplinaIds, setDisciplinaIds] = useState([]);
+  const disciplinas = useCarregamento(listarDisciplinas, []);
+  const disciplinasEscolhidas = (disciplinas.dados ?? []).filter((d) => disciplinaIds.includes(d.id));
 
   useEffect(() => {
     if (!editando || !permitido) return;
@@ -120,6 +125,7 @@ export default function ProfessorForm() {
           contato: professor.contato ?? '',
         });
         setNomeOriginal(professor.nome);
+        setDisciplinaIds(professor.disciplina_ids ?? []);
       })
       .catch((e) => {
         if (ignorar) return;
@@ -146,7 +152,12 @@ export default function ProfessorForm() {
     const texto = (campo) => valores[campo].trim();
     // The teacher PUT ignores null, so "" is what clears an optional field when editing
     const opcional = (campo) => texto(campo) || (editando ? '' : null);
-    const corpo = { nome: texto('nome'), qualificacao: opcional('qualificacao'), contato: opcional('contato') };
+    const corpo = {
+      nome: texto('nome'),
+      qualificacao: opcional('qualificacao'),
+      contato: opcional('contato'),
+      disciplina_ids: disciplinaIds,
+    };
     if (!editando) {
       corpo.email = texto('email');
       corpo.senha = valores.senha; // never trim a password
@@ -263,6 +274,29 @@ export default function ProfessorForm() {
           </Box>
           <TextField label="Qualificação" {...propsDoCampo('qualificacao')} />
           <TextField label="Contato" {...propsDoCampo('contato')} />
+          <Box sx={{ gridColumn: { sm: 'span 2' } }}>
+            <Autocomplete
+              multiple
+              options={disciplinas.dados ?? []}
+              getOptionLabel={(disciplina) => disciplina.nome}
+              isOptionEqualToValue={(opcao, valor) => opcao.id === valor.id}
+              value={disciplinasEscolhidas}
+              onChange={(_, escolhidas) => setDisciplinaIds(escolhidas.map((d) => d.id))}
+              disabled={enviando || Boolean(disciplinas.erro)}
+              noOptionsText="Nenhuma disciplina cadastrada"
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Disciplinas que leciona"
+                  helperText={
+                    disciplinas.erro
+                      ? 'As disciplinas não carregaram; as atuais são mantidas ao salvar'
+                      : 'Na atribuição de uma turma, só aparecem os professores da disciplina escolhida'
+                  }
+                />
+              )}
+            />
+          </Box>
         </Box>
 
         <Stack direction="row" spacing={1} sx={{ mt: 3 }}>

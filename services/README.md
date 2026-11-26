@@ -63,11 +63,11 @@ O gateway tira o `/api` antes de repassar. Por exemplo, `GET /api/alunos` chega 
 | Método | Rota | Quem pode |
 | --- | --- | --- |
 | GET | `/api/professores`, `/api/professores/{id}`, `/api/professores/{id}/atribuicoes` | logado |
-| POST, PUT, DELETE | `/api/professores`, `/api/professores/{id}` | ADMIN |
+| POST, PUT, DELETE | `/api/professores`, `/api/professores/{id}` | ADMIN. O corpo aceita `disciplina_ids`: as disciplinas que o professor leciona. Tirar uma disciplina que ele ainda dá em alguma turma responde 409 |
 | GET, POST, PUT, DELETE | `/api/tecnicos`, `/api/tecnicos/{id}` | ADMIN |
 | GET | `/api/disciplinas`, `/api/disciplinas/{id}`, `/api/turmas?ano_letivo=`, `/api/turmas/{id}`, `/api/turmas/{id}/atribuicoes` | logado |
 | POST, PUT, DELETE | `/api/disciplinas`, `/api/turmas` e os `/{id}` | ADMIN |
-| POST, DELETE | `/api/turmas/{id}/atribuicoes`, `/api/turmas/{id}/atribuicoes/{atribuicao_id}` | ADMIN |
+| POST, DELETE | `/api/turmas/{id}/atribuicoes`, `/api/turmas/{id}/atribuicoes/{atribuicao_id}` | ADMIN. O POST responde 422 se o professor não leciona a disciplina |
 
 Ao cadastrar um professor ou técnico, o administrativo chama o user-service para criar o login (perfil TEACHER ou ADMIN). Ao excluir, o login é desativado.
 

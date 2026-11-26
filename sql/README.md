@@ -20,6 +20,7 @@ sql/
     V5__criar_atribuicoes.sql
     V6__seed_dados_ficticios.sql
     V7__acentos_nos_dados_ficticios.sql
+    V8__criar_professor_disciplinas.sql
   alunos-service/          banco: alunos_db
     V1__criar_alunos.sql
     V2__seed_alunos.sql

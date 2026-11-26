@@ -71,6 +71,14 @@ STUDENT e PARENT veem apenas Início e Notificações. Qualquer outra rota leva 
 
 As permissões no frontend só escondem botões e menus. Quem bloqueia de verdade é o backend.
 
+## Emails de teste (Mailpit)
+
+Os emails de recuperação de senha e de verificação vão para o Mailpit, uma caixa de entrada de teste que sobe junto com o Docker Compose.
+
+1. Na tela de login, clique em "Esqueci minha senha" e informe o email.
+2. Abra http://localhost:8025, clique no email "Recuperação de senha" e no link.
+3. Crie a nova senha. O link vale por 1 hora e só pode ser usado uma vez.
+
 ## Resiliência
 
 - Se um serviço cai, só a parte da tela que depende dele mostra um aviso. O resto continua funcionando.

@@ -8,11 +8,13 @@ class ProfessorCreate(BaseModel):
     nome: str = Field(min_length=1, max_length=150)
     qualificacao: str | None = Field(default=None, max_length=255)
     contato: str | None = Field(default=None, max_length=100)
+    disciplina_ids: list[int] = Field(default_factory=list)
 
 class ProfessorUpdate(BaseModel):
     nome: str | None = Field(default=None, min_length=1, max_length=150)
     qualificacao: str | None = Field(default=None, max_length=255)
     contato: str | None = Field(default=None, max_length=100)
+    disciplina_ids: list[int] | None = None
 
 class ProfessorResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -22,3 +24,4 @@ class ProfessorResponse(BaseModel):
     nome: str
     qualificacao: str | None
     contato: str | None
+    disciplina_ids: list[int]

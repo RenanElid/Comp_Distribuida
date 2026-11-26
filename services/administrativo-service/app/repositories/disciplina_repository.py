@@ -10,6 +10,9 @@ class DisciplinaRepository:
     def buscar_por_id(self, disciplina_id: int) -> Disciplina | None:
         return self.db.get(Disciplina, disciplina_id)
 
+    def buscar_varias(self, disciplina_ids: set[int]) -> list[Disciplina]:
+        return list(self.db.scalars(select(Disciplina).where(Disciplina.id.in_(disciplina_ids))).all())
+
     def listar(self) -> list[Disciplina]:
         return list(self.db.scalars(select(Disciplina).order_by(Disciplina.nome)).all())
 

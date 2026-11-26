@@ -11,6 +11,7 @@ O `compose.yaml` sobe o sistema inteiro:
 | `flyway-user`, `flyway-administrativo`, `flyway-alunos`, `flyway-academico` | Criam as tabelas de cada banco e terminam |
 | `comunicacao-service`, `db-comunicacao`, `flyway-comunicacao` | Serviço de notificações (porta 8007, para o Swagger), banco e migrations, no perfil `comunicacao` |
 | `kafka` | Broker dos eventos (ver [kafka.md](kafka.md)) |
+| `mailpit` | Caixa de email de teste, porta 8025 (http://localhost:8025). Recebe os emails de recuperação de senha e de verificação que o user-service envia |
 
 ## Iniciar
 

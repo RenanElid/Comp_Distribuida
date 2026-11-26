@@ -195,6 +195,10 @@ services:
     ports:
       - "127.0.0.1:8001:8001"
     env_file: ./services/user-service/.env
+    # Overrides the .env: password recovery and email verification go to the Mailpit test inbox
+    environment:
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORTA: ${SMTP_PORTA:-1025}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
       interval: 10s
@@ -311,6 +315,13 @@ services:
       retries: 5
     # No depends_on: it only serves static files, so it starts even with the backend down
     # and the pages show "Serviço indisponível" until the gateway answers.
+
+  # Test email inbox: catches every email the user-service sends. Web page: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.30.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
 
 volumes:
   kafka_data:

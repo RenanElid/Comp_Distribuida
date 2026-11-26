@@ -62,6 +62,17 @@ export default function AtribuicoesDaTurma({ turmaId, podeEditar }) {
     return (disciplinas.dados ?? []).filter((d) => !ocupadas.has(d.id));
   }, [disciplinas.dados, atribuicoes.dados]);
 
+  // Only teachers who teach the chosen subject (registered in the teacher form)
+  const professoresDaDisciplina = (professores.dados ?? []).filter((p) =>
+    p.disciplina_ids.includes(escolha.disciplina_id)
+  );
+
+  function escolherDisciplina(disciplinaId) {
+    const habilitados = (professores.dados ?? []).filter((p) => p.disciplina_ids.includes(disciplinaId));
+    // With a single teacher for the subject there is nothing to choose: select it already
+    setEscolha({ disciplina_id: disciplinaId, professor_id: habilitados.length === 1 ? habilitados[0].id : '' });
+  }
+
   const nomeDisciplina = (id) => disciplinasPorId.get(id)?.nome ?? `Disciplina #${id}`;
   const nomeProfessor = (id) => professoresPorId.get(id)?.nome ?? `Professor #${id}`;
 
@@ -180,7 +191,7 @@ export default function AtribuicoesDaTurma({ turmaId, podeEditar }) {
               select
               label="Disciplina"
               value={escolha.disciplina_id}
-              onChange={(e) => setEscolha((atual) => ({ ...atual, disciplina_id: e.target.value }))}
+              onChange={(e) => escolherDisciplina(e.target.value)}
               disabled={enviando}
             >
               {disciplinasLivres.map((disciplina) => (
@@ -194,10 +205,17 @@ export default function AtribuicoesDaTurma({ turmaId, podeEditar }) {
               label="Professor"
               value={escolha.professor_id}
               onChange={(e) => setEscolha((atual) => ({ ...atual, professor_id: e.target.value }))}
-              disabled={enviando}
-              helperText="O professor recebe uma notificação da atribuição"
+              disabled={enviando || escolha.disciplina_id === '' || professoresDaDisciplina.length === 0}
+              error={escolha.disciplina_id !== '' && professoresDaDisciplina.length === 0}
+              helperText={
+                escolha.disciplina_id === ''
+                  ? 'Escolha a disciplina primeiro'
+                  : professoresDaDisciplina.length === 0
+                    ? 'Nenhum professor leciona esta disciplina. Inclua a disciplina no cadastro de um professor'
+                    : 'Só aparecem os professores desta disciplina. O professor recebe uma notificação'
+              }
             >
-              {(professores.dados ?? []).map((professor) => (
+              {professoresDaDisciplina.map((professor) => (
                 <MenuItem key={professor.id} value={professor.id}>
                   {professor.nome}
                 </MenuItem>
