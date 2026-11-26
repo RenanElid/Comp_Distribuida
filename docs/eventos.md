@@ -26,7 +26,8 @@ Toda mensagem tem o mesmo formato (o "envelope"):
 - `ocorrido_em`: data e hora em UTC.
 - `dados`: o conteúdo do evento, que muda de um evento para outro (veja abaixo).
 
-Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `attendance.recorded`) levam em `dados` o campo `destinatario_usuario_id`: o id, no user-service, de quem deve ser notificado. Quem publica já resolve esse id:
+Os eventos que viram notificação (`student.created`, `teacher.assigned`, `grade.recorded` e `attendance.recorded`) levam em `dados` o campo `destinatario_usuario_id`: o id, no user-service, de quem deve ser notificado. Quem publica já resolve esse id:
+- `student.created`: o usuário do próprio aluno (mensagem de boas-vindas).
 - `teacher.assigned`: o usuário do professor.
 - `grade.recorded` e `attendance.recorded`: o responsável do aluno (`responsavel_usuario_id`) ou, se ele não tiver responsável, o usuário do próprio aluno. O acadêmico consulta o alunos-service para descobrir. Se o alunos-service estiver fora, a nota ou a frequência é gravada do mesmo jeito e o evento sai com `destinatario_usuario_id: null`.
 
@@ -35,7 +36,7 @@ Os eventos que viram notificação (`teacher.assigned`, `grade.recorded` e `atte
 | Evento | Quem publica | Quando | Quem consome | O que o consumidor faz |
 |---|---|---|---|---|
 | `user.logged` | user-service | Depois de um login válido | (auditoria, futuro) | — |
-| `student.created` | alunos-service | Depois de cadastrar um aluno | (notificações, futuro) | — |
+| `student.created` | alunos-service | Depois de cadastrar um aluno | comunicacao-service | Cria a notificação `BOAS_VINDAS` para o aluno |
 | `student.deleted` | alunos-service | Depois de excluir um aluno | academico-service | Apaga as matrículas do aluno (e as notas e frequências delas) |
 | `class.deleted` | administrativo-service | Depois de excluir uma turma | academico-service | Apaga as matrículas da turma (e as notas e frequências delas) |
 | `teacher.assigned` | administrativo-service | Depois de atribuir um professor a uma disciplina numa turma | comunicacao-service | Cria a notificação `PROFESSOR_ATRIBUIDO` para o professor |
@@ -84,9 +85,17 @@ Publicado pelo alunos-service (`aluno_service.py`).
 {
   "tipo": "student.created",
   "ocorrido_em": "2026-11-03T21:10:02.731904+00:00",
-  "dados": { "aluno_id": 11, "usuario_id": 17, "nome": "Aluno Novo" }
+  "dados": {
+    "aluno_id": 11,
+    "usuario_id": 17,
+    "nome": "Aluno Novo",
+    "responsavel_usuario_id": 16,
+    "destinatario_usuario_id": 17
+  }
 }
 ```
+
+Consumido pelo comunicacao-service, que cria a notificação `Boas-vindas ao DistriSchool, Aluno Novo! Seu cadastro de aluno foi criado.` para o aluno.
 
 ### student.deleted
 
@@ -121,9 +130,18 @@ Publicado pelo administrativo-service (`atribuicao_service.py`).
 {
   "tipo": "teacher.assigned",
   "ocorrido_em": "2026-11-03T21:14:10.402981+00:00",
-  "dados": { "professor_id": 2, "turma_id": 1, "disciplina_id": 3, "destinatario_usuario_id": 4 }
+  "dados": {
+    "professor_id": 2,
+    "turma_id": 1,
+    "disciplina_id": 3,
+    "turma_nome": "9o Ano A",
+    "disciplina_nome": "História",
+    "destinatario_usuario_id": 4
+  }
 }
 ```
+
+A notificação sai assim: `Você foi atribuído à disciplina História na turma 9o Ano A`.
 
 ### grade.recorded
 
@@ -163,7 +181,12 @@ Publicado pelo academico-service (`frequencia_service.py`).
     "data": "2026-11-03",
     "situacao": "PRESENTE",
     "aluno_id": 1,
+    "aluno_nome": "Ana Souza",
     "destinatario_usuario_id": 16
   }
 }
 ```
+
+A notificação sai assim: `Frequência de Ana Souza em 03/11/2026: presente`. Sem o nome (alunos-service fora), fica `Frequência de 03/11/2026: presente`.
+
+A chamada da turma inteira (`POST /frequencias/chamada`) publica um `attendance.recorded` para cada aluno registrado.

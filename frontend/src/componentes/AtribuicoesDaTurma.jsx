@@ -43,14 +43,8 @@ export default function AtribuicoesDaTurma({ turmaId, podeEditar }) {
   const [enviando, setEnviando] = useState(false);
   const [erroDialog, setErroDialog] = useState(null);
 
-  const disciplinasPorId = useMemo(
-    () => new Map((disciplinas.dados ?? []).map((d) => [d.id, d])),
-    [disciplinas.dados]
-  );
-  const professoresPorId = useMemo(
-    () => new Map((professores.dados ?? []).map((p) => [p.id, p])),
-    [professores.dados]
-  );
+  const disciplinasPorId = useMemo(() => new Map((disciplinas.dados ?? []).map((d) => [d.id, d])), [disciplinas.dados]);
+  const professoresPorId = useMemo(() => new Map((professores.dados ?? []).map((p) => [p.id, p])), [professores.dados]);
 
   const linhas = useMemo(
     () =>
@@ -230,7 +224,8 @@ export default function AtribuicoesDaTurma({ turmaId, podeEditar }) {
         <DialogContent>
           <AlertaErro erro={erroDialog} />
           <DialogContentText>
-            {aRemover && `${nomeProfessor(aRemover.professor_id)} deixará de dar ${nomeDisciplina(aRemover.disciplina_id)} nesta turma.`}{' '}
+            {aRemover &&
+              `${nomeProfessor(aRemover.professor_id)} deixará de dar ${nomeDisciplina(aRemover.disciplina_id)} nesta turma.`}{' '}
             As notas já lançadas nesta disciplina continuam.
           </DialogContentText>
         </DialogContent>

@@ -95,6 +95,10 @@ Todas as rotas do acadêmico são para ADMIN ou TEACHER.
 | GET | `/api/notas?matricula_id=&disciplina_id=` | Lista as notas da matrícula, com a média calculada na hora. Com `disciplina_id`, a média é só daquela disciplina |
 | POST | `/api/frequencias` | Registra a frequência de um dia (`PRESENTE`, `FALTA` ou `ATRASO`) |
 | GET | `/api/frequencias?matricula_id=` | Lista a frequência da matrícula |
+| GET | `/api/frequencias/chamada?turma_id=&data=` | Frequências já registradas da turma naquele dia |
+| POST | `/api/frequencias/chamada` | Chamada da turma inteira: `{turma_id, data, registros: [{matricula_id, situacao}]}`. Quem já tem registro no dia é pulado e volta em `ja_registradas`, então reenviar a mesma chamada não duplica nada |
+| GET | `/api/frequencias/resumo?turma_id=` | Por matrícula: dias registrados, presenças, atrasos, faltas e percentual de presença ((presenças + atrasos) ÷ dias) |
+| GET | `/api/notas/resumo?turma_id=` | Por matrícula e disciplina: quantidade de notas e média |
 
 **comunicacao-service**
 

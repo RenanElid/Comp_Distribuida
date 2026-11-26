@@ -54,10 +54,16 @@ Senha de todos: `Senha@123`.
 | Rota | Tela | Quem vê |
 | --- | --- | --- |
 | `/login` | Login | Todos |
-| `/` | Início | Todos |
-| `/alunos`, `/alunos/novo`, `/alunos/:id` | Lista, cadastro e edição de alunos | ADMIN edita; TEACHER só consulta |
-| `/professores` | Lista de professores | ADMIN e TEACHER |
-| `/turmas`, `/turmas/:id` | Turmas, disciplinas e matrículas | ADMIN e TEACHER |
+| `/esqueci-senha`, `/redefinir-senha?token=` | Recuperação de senha (o link chega por email) | Todos, sem login |
+| `/verificar-email?token=` | Confirma o email (o link é pedido na página inicial) | Todos, sem login |
+| `/` | Início, com os totais de alunos, professores, turmas e disciplinas | Todos (totais só para ADMIN e TEACHER) |
+| `/alunos`, `/alunos/novo`, `/alunos/:id` | Lista com exportação CSV/PDF, cadastro e edição de alunos | ADMIN edita; TEACHER só consulta |
+| `/alunos/:id/historico` | Histórico escolar: notas e presença de todas as turmas do aluno, com exportação | ADMIN e TEACHER |
+| `/professores`, `/professores/novo`, `/professores/:id` | Lista, cadastro e edição de professores, com as turmas de cada um | ADMIN edita; TEACHER só consulta |
+| `/turmas`, `/turmas/:id` | Turmas, professores por disciplina (atribuição) e matrículas | ADMIN edita; TEACHER matricula |
+| `/turmas/:id/chamada` | Chamada da turma inteira num dia | ADMIN e TEACHER |
+| `/disciplinas` | Cadastro de disciplinas | ADMIN edita; TEACHER só consulta |
+| `/relatorios?turma_id=` | Relatório da turma: frequência (destaca abaixo de 75%) e médias por disciplina, com exportação | ADMIN e TEACHER |
 | `/matriculas/:id` | Notas e frequência do aluno na turma | ADMIN e TEACHER lançam |
 | `/notificacoes` | Notificações do usuário logado | Todos |
 

@@ -37,7 +37,16 @@ class AlunoService:
         )
         aluno = self.aluno_repository.salvar(aluno)
 
-        publicar_evento("student.created", {"aluno_id": aluno.id, "usuario_id": usuario_id, "nome": aluno.nome})
+        publicar_evento(
+            "student.created",
+            {
+                "aluno_id": aluno.id,
+                "usuario_id": usuario_id,
+                "nome": aluno.nome,
+                "responsavel_usuario_id": aluno.responsavel_usuario_id,
+                "destinatario_usuario_id": usuario_id,
+            },
+        )
         return aluno
 
     def atualizar(self, aluno_id: int, dados: AlunoUpdate) -> Aluno:

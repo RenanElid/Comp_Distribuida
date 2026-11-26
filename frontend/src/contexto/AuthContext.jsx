@@ -33,8 +33,14 @@ export function AuthProvider({ children }) {
     return dadosUsuario;
   }, []);
 
+  // After verifying the email the profile changes on the server: fetch /auth/me again
+  const recarregarUsuario = useCallback(async () => {
+    if (!lerToken()) return;
+    setUsuario(await buscarUsuarioLogado());
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ usuario, carregando, entrar, sair }}>
+    <AuthContext.Provider value={{ usuario, carregando, entrar, sair, recarregarUsuario }}>
       {children}
     </AuthContext.Provider>
   );

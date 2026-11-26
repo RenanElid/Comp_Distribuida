@@ -8,6 +8,23 @@ export function buscarUsuarioLogado() {
   return requisicao('/auth/me');
 }
 
+// Always answers the same message, whether the email exists or not (does not reveal registered emails)
+export function solicitarRecuperacaoSenha(email) {
+  return requisicao('/auth/recuperar-senha', { metodo: 'POST', corpo: { email }, autenticado: false });
+}
+
+export function redefinirSenha(token, nova_senha) {
+  return requisicao('/auth/redefinir-senha', { metodo: 'POST', corpo: { token, nova_senha }, autenticado: false });
+}
+
+export function enviarVerificacaoEmail() {
+  return requisicao('/auth/enviar-verificacao', { metodo: 'POST' });
+}
+
+export function verificarEmail(token) {
+  return requisicao('/auth/verificar-email', { params: { token }, autenticado: false });
+}
+
 export function listarAlunos({ nome, matricula, pagina, tamanho }) {
   return requisicao('/alunos', { params: { nome, matricula, pagina, tamanho } });
 }
@@ -154,6 +171,27 @@ export function listarFrequencias(matricula_id) {
 
 export function registrarFrequencia(dados) {
   return requisicao('/frequencias', { metodo: 'POST', corpo: dados });
+}
+
+// Attendance of the whole class on one day (only the enrollments that already have a record)
+export function listarChamada(turma_id, data) {
+  return requisicao('/frequencias/chamada', { params: { turma_id, data } });
+}
+
+// One request for the whole class. Enrollments already registered on that day are skipped and come back
+// in ja_registradas, so sending the same roll call twice never duplicates anything.
+export function registrarChamada(turma_id, data, registros) {
+  return requisicao('/frequencias/chamada', { metodo: 'POST', corpo: { turma_id, data, registros } });
+}
+
+// Per enrollment: total days, presentes, atrasos, faltas and percentual (computed in the database)
+export function resumoFrequenciaDaTurma(turma_id) {
+  return requisicao('/frequencias/resumo', { params: { turma_id } });
+}
+
+// Per enrollment and subject: quantidade of grades and media
+export function resumoNotasDaTurma(turma_id) {
+  return requisicao('/notas/resumo', { params: { turma_id } });
 }
 
 // 404: gateway without the route; 502/503/504: comunicacao-service stopped or not started

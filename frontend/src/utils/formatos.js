@@ -5,6 +5,13 @@ export function formatarData(dataIso) {
   return `${dia}/${mes}/${ano}`;
 }
 
+// Attendance situations, in the order shown on screen
+export const SITUACOES = {
+  PRESENTE: { rotulo: 'Presente', cor: 'success' },
+  ATRASO: { rotulo: 'Atraso', cor: 'warning' },
+  FALTA: { rotulo: 'Falta', cor: 'error' },
+};
+
 export const NOMES_TURNO = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite' };
 
 // 8.5 -> "8,5"
@@ -33,3 +40,11 @@ export function calcularMedia(valores) {
 export function formatarDataHora(timestampIso) {
   return new Date(timestampIso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
+
+// 87.5 -> "87,5%"; null (no day registered yet) -> "-"
+export function formatarPercentual(valor) {
+  return valor == null ? '-' : `${formatarNumero(valor)}%`;
+}
+
+// Below this, the reports highlight the student (minimum attendance used by Brazilian schools)
+export const PRESENCA_MINIMA = 75;

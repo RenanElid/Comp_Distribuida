@@ -22,9 +22,11 @@ class AtribuicaoService:
         return self.atribuicao_repository.listar_da_turma(turma_id)
 
     def atribuir(self, turma_id: int, dados: AtribuicaoCreate) -> Atribuicao:
-        if self.turma_repository.buscar_por_id(turma_id) is None:
+        turma = self.turma_repository.buscar_por_id(turma_id)
+        if turma is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Turma não encontrada")
-        if self.disciplina_repository.buscar_por_id(dados.disciplina_id) is None:
+        disciplina = self.disciplina_repository.buscar_por_id(dados.disciplina_id)
+        if disciplina is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Disciplina não encontrada")
         professor = self.professor_repository.buscar_por_id(dados.professor_id)
         if professor is None:
@@ -45,6 +47,8 @@ class AtribuicaoService:
                 "professor_id": atribuicao.professor_id,
                 "turma_id": turma_id,
                 "disciplina_id": atribuicao.disciplina_id,
+                "turma_nome": turma.nome,
+                "disciplina_nome": disciplina.nome,
                 "destinatario_usuario_id": professor.usuario_id,
             },
         )

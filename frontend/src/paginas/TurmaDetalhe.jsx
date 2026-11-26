@@ -212,6 +212,14 @@ export default function TurmaDetalhe() {
           <Typography variant="h5" sx={{ flexGrow: 1 }}>
             {turma.dados.nome} · {turma.dados.ano_letivo} · {NOMES_TURNO[turma.dados.turno] ?? turma.dados.turno}
           </Typography>
+          {podeGerenciar && (
+            <Button variant="contained" component={Link} to={`/turmas/${id}/chamada`}>
+              Fazer chamada
+            </Button>
+          )}
+          <Button component={Link} to={`/relatorios?turma_id=${id}`}>
+            Relatório
+          </Button>
           {podeEditarTurma && (
             <>
               <Button onClick={() => setEditandoTurma(true)}>Editar turma</Button>

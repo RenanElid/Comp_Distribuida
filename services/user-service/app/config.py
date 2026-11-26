@@ -8,5 +8,8 @@ class Settings(BaseSettings):
     jwt_expiracao_minutos: int = 60
     frontend_url: str = "http://localhost:3000"
     kafka_bootstrap_servers: str | None = None
+    smtp_host: str | None = None
+    smtp_porta: int = 1025
+    smtp_remetente: str = "nao-responda@distrischool.test"
 
 settings = Settings()

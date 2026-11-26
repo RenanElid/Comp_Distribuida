@@ -28,6 +28,7 @@ const ITENS_MENU = [
   { rotulo: 'Professores', caminho: '/professores', apenasPainel: true },
   { rotulo: 'Turmas', caminho: '/turmas', apenasPainel: true },
   { rotulo: 'Disciplinas', caminho: '/disciplinas', apenasPainel: true },
+  { rotulo: 'Relatórios', caminho: '/relatorios', apenasPainel: true },
   { rotulo: 'Notificações', caminho: '/notificacoes', mostrarNaoLidas: true },
 ];
 

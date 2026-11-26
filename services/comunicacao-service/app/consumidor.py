@@ -10,7 +10,7 @@ from app.services.notificacao_service import NotificacaoService
 
 logger = logging.getLogger("consumidor")
 
-TOPICOS = ["grade.recorded", "attendance.recorded", "teacher.assigned"]
+TOPICOS = ["grade.recorded", "attendance.recorded", "teacher.assigned", "student.created"]
 parar_consumidor = Event()
 
 def rodar_consumidor():

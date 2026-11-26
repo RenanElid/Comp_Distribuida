@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Box, Button, Paper, TextField, Typography } from '@mui/material';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Box, Button, Link as LinkMui, Paper, TextField, Typography } from '@mui/material';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexto/AuthContext';
 import AlertaErro from '../componentes/AlertaErro';
 
@@ -61,6 +61,9 @@ export default function Login() {
         <Button type="submit" variant="contained" fullWidth disabled={enviando} sx={{ mt: 2 }}>
           {enviando ? 'Entrando...' : 'Entrar'}
         </Button>
+        <LinkMui component={Link} to="/esqueci-senha" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
+          Esqueci minha senha
+        </LinkMui>
       </Paper>
     </Box>
   );

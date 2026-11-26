@@ -17,15 +17,9 @@ import {
   Typography,
 } from '@mui/material';
 import { registrarFrequencia } from '../api/endpoints';
-import { formatarData, formatarNumero, hojeIso } from '../utils/formatos';
+import { SITUACOES, formatarData, formatarNumero, hojeIso } from '../utils/formatos';
 import AlertaErro from './AlertaErro';
 import DialogLancamento from './DialogLancamento';
-
-const SITUACOES = {
-  PRESENTE: { rotulo: 'Presente', cor: 'success' },
-  ATRASO: { rotulo: 'Atraso', cor: 'warning' },
-  FALTA: { rotulo: 'Falta', cor: 'error' },
-};
 
 // Project rule: a late arrival still attended the class, so ATRASO counts as presence
 function resumirFrequencia(frequencias) {

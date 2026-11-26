@@ -53,10 +53,7 @@ function AtribuicoesDoProfessor({ professorId }) {
   const disciplinas = useCarregamento(listarDisciplinas, []);
 
   const turmasPorId = useMemo(() => new Map((turmas.dados ?? []).map((t) => [t.id, t])), [turmas.dados]);
-  const disciplinasPorId = useMemo(
-    () => new Map((disciplinas.dados ?? []).map((d) => [d.id, d])),
-    [disciplinas.dados]
-  );
+  const disciplinasPorId = useMemo(() => new Map((disciplinas.dados ?? []).map((d) => [d.id, d])), [disciplinas.dados]);
 
   return (
     <Paper sx={{ p: 3, maxWidth: 720, mt: 3 }}>
@@ -290,8 +287,8 @@ export default function ProfessorForm() {
         <DialogTitle>Excluir {nomeOriginal}?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            O cadastro do professor será apagado e o login dele será desativado. Só é possível excluir um professor
-            sem turmas atribuídas. Essa ação não pode ser desfeita.
+            O cadastro do professor será apagado e o login dele será desativado. Só é possível excluir um professor sem
+            turmas atribuídas. Essa ação não pode ser desfeita.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

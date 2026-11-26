@@ -10,6 +10,7 @@ const NOMES_TIPO = {
   NOTA_LANCADA: 'Nota',
   FREQUENCIA_REGISTRADA: 'Frequência',
   PROFESSOR_ATRIBUIDO: 'Atribuição',
+  BOAS_VINDAS: 'Boas-vindas',
 };
 
 export default function Notificacoes() {

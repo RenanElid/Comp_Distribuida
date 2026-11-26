@@ -229,9 +229,16 @@ export default function AlunoForm() {
 
   return (
     <>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        {editando ? `Editar aluno: ${nomeOriginal}` : 'Novo aluno'}
-      </Typography>
+      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {editando ? `Editar aluno: ${nomeOriginal}` : 'Novo aluno'}
+        </Typography>
+        {editando && (
+          <Button component={Link} to={`/alunos/${id}/historico`}>
+            Ver histórico
+          </Button>
+        )}
+      </Stack>
 
       <Paper component="form" onSubmit={salvar} noValidate sx={{ p: 3, maxWidth: 720 }}>
         <AlertaErro erro={erroGeral} />

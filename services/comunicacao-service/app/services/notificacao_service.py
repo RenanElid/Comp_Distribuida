@@ -50,9 +50,20 @@ class NotificacaoService:
         if topico == "grade.recorded":
             return "NOTA_LANCADA", self.mensagem_da_nota(dados)
         if topico == "attendance.recorded":
-            dia = date.fromisoformat(dados["data"]).strftime("%d/%m/%Y")
-            return "FREQUENCIA_REGISTRADA", f"Frequência de {dia}: {dados['situacao'].lower()}"
-        return "PROFESSOR_ATRIBUIDO", f"Você foi atribuído à disciplina {dados['disciplina_id']} da turma {dados['turma_id']}"
+            return "FREQUENCIA_REGISTRADA", self.mensagem_da_frequencia(dados)
+        if topico == "student.created":
+            return "BOAS_VINDAS", f"Boas-vindas ao DistriSchool, {dados['nome']}! Seu cadastro de aluno foi criado."
+        disciplina = dados.get("disciplina_nome") or f"#{dados['disciplina_id']}"
+        turma = dados.get("turma_nome") or f"#{dados['turma_id']}"
+        return "PROFESSOR_ATRIBUIDO", f"Você foi atribuído à disciplina {disciplina} na turma {turma}"
+
+    def mensagem_da_frequencia(self, dados: dict) -> str:
+        dia = date.fromisoformat(dados["data"]).strftime("%d/%m/%Y")
+        situacao = {"PRESENTE": "presente", "ATRASO": "atraso", "FALTA": "falta"}.get(dados["situacao"], dados["situacao"])
+        aluno = dados.get("aluno_nome")
+        if aluno:
+            return f"Frequência de {aluno} em {dia}: {situacao}"
+        return f"Frequência de {dia}: {situacao}"
 
     def mensagem_da_nota(self, dados: dict) -> str:
         valor = dados["valor"]

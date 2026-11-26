@@ -19,6 +19,7 @@ sql/
     V4__criar_turmas.sql
     V5__criar_atribuicoes.sql
     V6__seed_dados_ficticios.sql
+    V7__acentos_nos_dados_ficticios.sql
   alunos-service/          banco: alunos_db
     V1__criar_alunos.sql
     V2__seed_alunos.sql
@@ -34,6 +35,7 @@ sql/
   comunicacao-service/     banco: comunicacao_db
     V1__criar_notificacoes.sql
     V2__criar_eventos_processados.sql
+    V3__adicionar_tipo_boas_vindas.sql
 ```
 
 ## Ordem de execucao

@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -15,6 +16,9 @@ from app.security import criar_token, gerar_hash_senha, ler_token, verificar_sen
 
 HORAS_VALIDADE_RECUPERACAO = 1
 HORAS_VALIDADE_VERIFICACAO = 24
+
+def resumo_do_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 class AuthService:
     def __init__(self, db: Session):
@@ -46,17 +50,18 @@ class AuthService:
         if usuario is None or not usuario.ativo:
             return
 
+        token_do_link = secrets.token_urlsafe(32)
         token = TokenRecuperacao(
             usuario_id=usuario.id,
-            token=secrets.token_urlsafe(32),
+            token=resumo_do_token(token_do_link),
             expira_em=datetime.now(timezone.utc) + timedelta(hours=HORAS_VALIDADE_RECUPERACAO),
         )
         self.token_repository.salvar(token)
-        link = f"{settings.frontend_url}/redefinir-senha?token={token.token}"
+        link = f"{settings.frontend_url}/redefinir-senha?token={token_do_link}"
         enviar_email(usuario.email, "Recuperação de senha", f"Acesse o link para criar uma nova senha: {link}")
 
     def redefinir_senha(self, dados: RedefinirSenhaRequest):
-        token = self.token_repository.buscar_por_token(dados.token)
+        token = self.token_repository.buscar_por_token(resumo_do_token(dados.token))
         if token is None or token.usado or token.expira_em < datetime.now(timezone.utc):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Token inválido ou expirado")
 

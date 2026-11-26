@@ -171,7 +171,7 @@ export default function Alunos() {
                 <TableCell>Nome</TableCell>
                 <TableCell>Nascimento</TableCell>
                 <TableCell>Contato</TableCell>
-                {podeEditar && <TableCell align="right">Ações</TableCell>}
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -182,18 +182,21 @@ export default function Alunos() {
                   <TableCell>{formatarData(aluno.data_nascimento)}</TableCell>
                   {/* || instead of ??: a cleared field comes back as "" (see AlunoForm) */}
                   <TableCell>{aluno.contato || '-'}</TableCell>
-                  {podeEditar && (
-                    <TableCell align="right">
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <Button size="small" component={Link} to={`/alunos/${aluno.id}/historico`}>
+                      Histórico
+                    </Button>
+                    {podeEditar && (
                       <Button size="small" component={Link} to={`/alunos/${aluno.id}`} state={estadoDoLink}>
                         Editar
                       </Button>
-                    </TableCell>
-                  )}
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
               {!carregando && !erro && resultado.itens.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={podeEditar ? 5 : 4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     Nenhum aluno encontrado
                   </TableCell>
                 </TableRow>

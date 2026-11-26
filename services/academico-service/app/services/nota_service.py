@@ -6,7 +6,7 @@ from app.eventos import publicar_evento
 from app.models import Nota
 from app.repositories.matricula_repository import MatriculaRepository
 from app.repositories.nota_repository import NotaRepository
-from app.schemas.nota import NotaCreate, NotasDaMatricula
+from app.schemas.nota import NotaCreate, NotasDaMatricula, ResumoNota
 
 class NotaService:
     def __init__(self, db: Session):
@@ -44,6 +44,12 @@ class NotaService:
             },
         )
         return nota
+
+    def resumo_da_turma(self, turma_id: int) -> list[ResumoNota]:
+        return [
+            ResumoNota(**{**linha._asdict(), "media": round(float(linha.media), 2)})
+            for linha in self.nota_repository.resumo_da_turma(turma_id)
+        ]
 
     def listar_da_matricula(self, matricula_id: int, disciplina_id: int | None = None) -> NotasDaMatricula:
         if self.matricula_repository.buscar_por_id(matricula_id) is None:

@@ -15,6 +15,13 @@ class NotaResponse(BaseModel):
     descricao: str
     valor: float
 
+class ResumoNota(BaseModel):
+    matricula_id: int
+    aluno_id: int
+    disciplina_id: int | None
+    quantidade: int
+    media: float
+
 class NotasDaMatricula(BaseModel):
     matricula_id: int
     disciplina_id: int | None
