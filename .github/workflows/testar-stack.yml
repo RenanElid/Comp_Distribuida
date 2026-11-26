@@ -52,7 +52,7 @@ jobs:
           echo "::error::O Prometheus não confirmou os oito serviços disponíveis."
           exit 1
 
-      - name: Medir o p95 das rotas pelo gateway
+      - name: Verificar o limite de dois segundos por consulta
         run: |
           echo '### Teste de carga' >> "$GITHUB_STEP_SUMMARY"
           echo '```text' >> "$GITHUB_STEP_SUMMARY"

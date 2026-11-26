@@ -58,7 +58,7 @@ def resumir(rotulo, amostras):
     contagem = Counter(status for _, status, _ in amostras)
     status = ", ".join(f"{chave}={qtd}" for chave, qtd in sorted(contagem.items()))
     print(f"{rotulo:<18} {len(tempos):>6} {p95 * 1000:>10.1f} {tempos[-1] * 1000:>11.1f}   {status}")
-    return contagem["200"] == len(tempos) and p95 < LIMITE_SEGUNDOS
+    return contagem["200"] == len(tempos) and tempos[-1] < LIMITE_SEGUNDOS
 
 
 def main():
@@ -92,9 +92,9 @@ def main():
     resumir("Total", amostras)
     print(f"Duração: {duracao:.2f} s | vazão: {len(amostras) / duracao:.1f} req/s")
     if all(aprovacoes):
-        print("APROVADO: todas as rotas com p95 abaixo de 2 s e zero erros.")
+        print("APROVADO: todas as consultas responderam em menos de 2 s e zero erros.")
         return 0
-    print("REPROVADO: houve erro ou alguma rota atingiu p95 de 2 s ou mais.")
+    print("REPROVADO: houve erro ou alguma consulta levou 2 s ou mais.")
     return 1
 
 

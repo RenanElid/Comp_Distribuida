@@ -60,7 +60,7 @@ Todos os usuários do seed usam a senha `Senha@123` (a lista está em [sql/READM
 
 1. No frontend, use **Esqueci minha senha** com `carla.tecnica@distrischool.test`. Abra a [caixa do Mailpit](http://localhost:8025) para conferir a mensagem que chegou por SMTP.
 2. Abra o [painel do Grafana](http://localhost:3001/d/distrischool-http). Na primeira execução com os valores padrão, entre com `admin` e `distrischool-demo`. O painel mostra disponibilidade e tempo de resposta das cinco APIs, do gateway, do frontend e do Mailpit. O [Prometheus](http://localhost:9090) coleta uma medição a cada 15 segundos.
-3. Na raiz, execute `python scripts/teste_carga.py` (ou `python3`). O teste faz login uma vez e envia 200 consultas pelo gateway com até oito requisições simultâneas. Ele exibe o p95, o máximo e os códigos HTTP de cada rota. Para passar, todas as respostas precisam ser HTTP 200 com JSON válido e o p95 de **cada rota** precisa ficar abaixo de dois segundos.
+3. Na raiz, execute `python scripts/teste_carga.py` (ou `python3`). O teste faz login uma vez e envia 200 consultas pelo gateway com até oito requisições simultâneas. Ele exibe o p95, o máximo e os códigos HTTP de cada rota. Para passar, **cada consulta** precisa retornar HTTP 200 com JSON válido em menos de dois segundos.
 
 ## Integração e entrega contínuas
 
